@@ -1,0 +1,59 @@
+# ============================================================
+# Privacy-Preserving Document Processing System
+# Edge AI Security Gateway — Docker Compose
+# ============================================================
+
+version: "3.9"
+
+services:
+  # ── Secure Document AI Application ──
+  secure-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: secure-doc-ai
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./storage/uploads:/app/storage/uploads
+      - ./storage/processed:/app/storage/processed
+      - ./storage/signed:/app/storage/signed
+      - ./storage/keys:/app/storage/keys
+      - ./config/policies:/app/config/policies
+    depends_on:
+      secure-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - secure-network
+
+  # ── PostgreSQL Database (Audit Trail) ──
+  secure-db:
+    image: postgres:16-alpine
+    container_name: secure-doc-db
+    environment:
+      POSTGRES_DB: secure_doc_ai
+      POSTGRES_USER: secure_admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change_me_in_production}
+    ports:
+      - "5432:5432"
+    volumes:
+      - secure-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U secure_admin -d secure_doc_ai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - secure-network
+
+volumes:
+  secure-db-data:
+    driver: local
+
+networks:
+  secure-network:
+    driver: bridge

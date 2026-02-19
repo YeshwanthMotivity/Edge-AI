@@ -1,0 +1,84 @@
+{
+    "policy_name": "hr_policy",
+    "description": "HR document policy — elevated sensitivity for personal identifiers",
+    "version": "1.0.0",
+    "entities": {
+        "EMAIL": {
+            "enabled": true,
+            "detection_method": "regex",
+            "confidence_threshold": 0.85,
+            "masking_style": "full",
+            "replacement": "[EMAIL REDACTED]"
+        },
+        "PHONE": {
+            "enabled": true,
+            "detection_method": "regex",
+            "confidence_threshold": 0.85,
+            "masking_style": "full",
+            "replacement": "[PHONE REDACTED]"
+        },
+        "CREDIT_CARD": {
+            "enabled": true,
+            "detection_method": "regex_luhn",
+            "confidence_threshold": 0.95,
+            "masking_style": "full",
+            "replacement": "[CC REDACTED]"
+        },
+        "SSN": {
+            "enabled": true,
+            "detection_method": "regex",
+            "confidence_threshold": 0.90,
+            "masking_style": "full",
+            "replacement": "[SSN REDACTED]"
+        },
+        "PERSON_NAME": {
+            "enabled": true,
+            "detection_method": "ner",
+            "confidence_threshold": 0.75,
+            "masking_style": "full",
+            "replacement": "[NAME REDACTED]"
+        },
+        "ADDRESS": {
+            "enabled": true,
+            "detection_method": "ner",
+            "confidence_threshold": 0.75,
+            "masking_style": "full",
+            "replacement": "[ADDRESS REDACTED]"
+        },
+        "ORGANIZATION": {
+            "enabled": false,
+            "detection_method": "ner",
+            "confidence_threshold": 0.80,
+            "masking_style": "full",
+            "replacement": "[ORG REDACTED]"
+        },
+        "DATE_OF_BIRTH": {
+            "enabled": true,
+            "detection_method": "regex",
+            "confidence_threshold": 0.80,
+            "masking_style": "full",
+            "replacement": "[DOB REDACTED]"
+        }
+    },
+    "allowlist": {
+        "emails": [],
+        "phones": [],
+        "names": [
+            "Human Resources",
+            "HR Department"
+        ],
+        "patterns": []
+    },
+    "signing_required": true,
+    "audit_required": true,
+    "visual_redaction": {
+        "box_color": [
+            0,
+            0,
+            0
+        ],
+        "box_opacity": 1.0,
+        "font_size": 8,
+        "label_redactions": true
+    }
+}

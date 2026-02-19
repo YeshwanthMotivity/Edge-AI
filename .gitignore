@@ -1,0 +1,53 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Virtual Environment ──
+venv/
+.venv/
+env/
+
+# ── Environment Variables ──
+.env
+
+# ── Database ──
+*.db
+*.sqlite3
+
+# ── Storage (runtime artifacts) ──
+storage/uploads/*
+storage/processed/*
+storage/signed/*
+storage/keys/*
+!storage/**/.gitkeep
+!storage/README.md
+
+# ── IDE ──
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── Testing ──
+.pytest_cache/
+htmlcov/
+.coverage
+
+# ── Reference docs (not part of project) ──
+Book.pdf
+Book1.pdf
+Book.xlsx
+
+# ── Misc ──
+*.log
