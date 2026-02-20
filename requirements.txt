@@ -21,22 +21,25 @@ pytesseract==0.3.13
 Pillow==11.1.0
 
 # --- AI / NER ---
-onnxruntime==1.20.1
-transformers==4.48.1
-tokenizers==0.21.0
+# onnxruntime==1.20.1
+# transformers==4.48.1
+# tokenizers==0.21.0
 
 # --- Digital Signature ---
 pyhanko==0.25.2
+pyhanko-certvalidator==0.26.4
 cryptography==44.0.0
 
 # --- Database ---
 SQLAlchemy==2.0.37
 aiosqlite==0.20.0
+psycopg2-binary==2.9.9
 
-# --- Authentication ---
+# --- Authentication & Security ---
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-bcrypt==4.2.1
+bcrypt==3.2.0
+slowapi==0.1.9
 
 # --- Logging & Monitoring ---
 structlog==24.4.0

@@ -4,34 +4,19 @@ SecureDocAI — Authentication Routes
 JWT token generation and user authentication.
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
 
 from app.core.security import create_access_token, verify_password, hash_password
+from app.core.rate_limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-# ── POC: In-memory user store (replace with DB in production) ──
-# Password: "admin123" hashed with bcrypt
-POC_USERS = {
-    "admin": {
-        "username": "admin",
-        "hashed_password": hash_password("admin123"),
-        "role": "admin",
-    },
-    "operator": {
-        "username": "operator",
-        "hashed_password": hash_password("operator123"),
-        "role": "operator",
-    },
-}
-
-
-class LoginRequest(BaseModel):
-    """Login request payload."""
-    username: str = Field(..., description="Username")
-    password: str = Field(..., description="Password")
+from sqlalchemy.orm import Session
+from app.db.database import get_db
+from app.models.user import User
 
 
 class TokenResponse(BaseModel):
@@ -48,16 +33,19 @@ class TokenResponse(BaseModel):
     summary="Get Access Token",
     description="Authenticate and receive a JWT access token.",
 )
-async def login(request: LoginRequest) -> TokenResponse:
+@limiter.limit("5/minute")
+async def login(
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+) -> TokenResponse:
     """
     Authenticate user and return a JWT access token.
-
-    POC: Uses in-memory user store.
-    Production: Replace with database-backed user management.
+    Uses the database-backed User model.
     """
-    user = POC_USERS.get(request.username)
+    user = db.query(User).filter(User.username == form_data.username).first()
 
-    if not user or not verify_password(request.password, user["hashed_password"]):
+    if not user or not user.is_active or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
@@ -65,11 +53,11 @@ async def login(request: LoginRequest) -> TokenResponse:
         )
 
     access_token = create_access_token(
-        data={"sub": user["username"], "role": user["role"]}
+        data={"sub": user.username, "role": user.role}
     )
 
     return TokenResponse(
         access_token=access_token,
-        username=user["username"],
-        role=user["role"],
+        username=user.username,
+        role=user.role,
     )

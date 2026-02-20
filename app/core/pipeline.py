@@ -90,7 +90,7 @@ class DocumentPipeline:
             self._signer = DigitalSigner(key_manager)
         return self._signer
 
-    async def process(
+    def process(
         self,
         file_path: Path,
         filename: str,
@@ -212,7 +212,7 @@ class DocumentPipeline:
                     document_id=document_id,
                     operator_id=operator_id,
                     filename=filename,
-                    original_hash=original_hash if 'original_hash' in dir() else "unknown",
+                    original_hash=locals().get('original_hash', "unknown"),
                     status="failed",
                     processing_time_ms=processing_time_ms,
                     error_message=str(e),
@@ -224,7 +224,7 @@ class DocumentPipeline:
             return ProcessingResult(
                 document_id=document_id,
                 status=ProcessingStatus.FAILED,
-                original_hash=original_hash if 'original_hash' in dir() else "unknown",
+                original_hash=locals().get('original_hash', "unknown"),
                 processing_time_ms=processing_time_ms,
                 errors=[str(e)],
             )
@@ -280,7 +280,7 @@ class DocumentPipeline:
         else:
             return self.image_redactor.redact(file_path, output_path, redaction_map)
 
-    async def analyze_only(
+    def analyze_only(
         self,
         file_path: Path,
         filename: str,

@@ -90,6 +90,7 @@ class ProcessResponse(BaseModel):
     status: ProcessingStatus
     original_hash: str
     sanitized_hash: Optional[str] = None
+    sanitized_path: Optional[str] = None
     signed_path: Optional[str] = None
     signature_serial: Optional[str] = None
     entities_detected: int
@@ -105,3 +106,6 @@ class HealthResponse(BaseModel):
     version: str = "1.0.0"
     environment: str = "development"
     uptime_seconds: float = 0.0
+    database: str = "unknown"
+    signer: str = "unknown"
+    ocr_engine: str = "unknown"

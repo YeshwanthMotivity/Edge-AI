@@ -54,7 +54,6 @@ class DigitalSigner:
         """
         try:
             from pyhanko.sign import signers, fields
-            from pyhanko.sign.general import load_cert_list_pemder
             from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
 
             # Ensure output directory exists
@@ -63,12 +62,22 @@ class DigitalSigner:
             # Get certificate info for audit
             cert_info = self.key_manager.get_cert_info()
 
-            # Create signer from loaded keys
-            signer = signers.SimpleSigner(
-                signing_cert=self.key_manager.certificate,
-                signing_key=self.key_manager.private_key,
-                cert_registry=None,
-            )
+            # Create signer using KeyManager paths
+            if self.key_manager.p12_path and self.key_manager.p12_path.exists():
+                signer = signers.SimpleSigner.load_pkcs12(
+                    pfx_file=str(self.key_manager.p12_path),
+                    passphrase=self.key_manager.p12_passphrase.encode() if self.key_manager.p12_passphrase else None,
+                )
+            elif self.key_manager.cert_path and self.key_manager.key_path:
+                signer = signers.SimpleSigner.load(
+                    key_file=str(self.key_manager.key_path),
+                    cert_file=str(self.key_manager.cert_path),
+                )
+            else:
+                raise SigningError(
+                    message="Missing key paths for PyHanko SimpleSigner",
+                    document_id="",
+                )
 
             # Open the PDF for signing
             with open(str(input_path), "rb") as inf:
@@ -106,9 +115,10 @@ class DigitalSigner:
                 "location": location,
             }
 
-        except ImportError:
+        except ImportError as e:
+            logger.error("pyhanko_import_error", error=str(e))
             raise SigningError(
-                message="PyHanko is not installed",
+                message=f"PyHanko is not installed or import failed: {str(e)}",
                 document_id="",
             )
         except Exception as e:

@@ -24,11 +24,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config.settings import get_settings
 from app.db.database import init_db
+from app.models.user import User  # Ensure User is registered for init_db
 from app.api.routes import health, auth, documents
 from app.api.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from app.core.exceptions import SecureDocAIError
+from app.core.rate_limiter import setup_rate_limiting
 
 # ── Structured Logging ──
+import logging
+logging.basicConfig(format="%(message)s", stream=sys.stdout, level=logging.INFO)
+
 structlog.configure(
     processors=[
         structlog.stdlib.add_log_level,
@@ -37,7 +42,7 @@ structlog.configure(
         structlog.processors.JSONRenderer(),
     ],
     wrapper_class=structlog.stdlib.BoundLogger,
-    logger_factory=structlog.PrintLoggerFactory(),
+    logger_factory=structlog.stdlib.LoggerFactory(),
 )
 
 logger = structlog.get_logger(__name__)

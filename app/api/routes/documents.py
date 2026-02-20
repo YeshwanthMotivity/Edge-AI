@@ -8,13 +8,14 @@ import uuid
 import shutil
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_db
 from app.core.pipeline import DocumentPipeline
 from app.core.exceptions import SecureDocAIError
 from app.models.document import ProcessResponse, AnalyzeResponse
+from app.core.rate_limiter import limiter
 from config.settings import get_settings
 
 import structlog
@@ -24,7 +25,7 @@ logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["Document Processing"])
 
 
-async def _save_upload(file: UploadFile) -> Path:
+def _save_upload(file: UploadFile) -> Path:
     """Save uploaded file to storage and return the path."""
     settings = get_settings()
     settings.ensure_directories()
@@ -61,7 +62,7 @@ async def _save_upload(file: UploadFile) -> Path:
     summary="Analyze Document",
     description="Detect sensitive entities without applying masking. Returns entity types, counts, and confidence scores.",
 )
-async def analyze_document(
+def analyze_document(
     file: UploadFile = File(..., description="Document to analyze (PDF/Image)"),
     policy: str = Form(default="default_policy", description="Detection policy name"),
     current_user: dict = Depends(get_current_user),
@@ -71,11 +72,11 @@ async def analyze_document(
     Detect sensitive entities in a document (read-only analysis).
     No masking or signing is performed.
     """
-    file_path = await _save_upload(file)
+    file_path = _save_upload(file)
 
     try:
         pipeline = DocumentPipeline(db)
-        result = await pipeline.analyze_only(file_path, file.filename, policy)
+        result = pipeline.analyze_only(file_path, file.filename, policy)
 
         return AnalyzeResponse(
             document_id=result["document_id"],
@@ -98,7 +99,9 @@ async def analyze_document(
     summary="Full Pipeline Processing",
     description="Complete pipeline: analyze → mask → sign → audit. Returns signed sanitized document.",
 )
-async def process_document(
+@limiter.limit("20/minute")
+def process_document(
+    request: Request,
     file: UploadFile = File(..., description="Document to process (PDF/Image)"),
     policy: str = Form(default="default_policy", description="Detection policy name"),
     current_user: dict = Depends(get_current_user),
@@ -109,11 +112,11 @@ async def process_document(
 
     Flow: Extract → Detect → Redact → Log Processing → Sign → Log Signature → Output
     """
-    file_path = await _save_upload(file)
+    file_path = _save_upload(file)
 
     try:
         pipeline = DocumentPipeline(db)
-        result = await pipeline.process(
+        result = pipeline.process(
             file_path=file_path,
             filename=file.filename,
             policy_name=policy,
@@ -125,6 +128,7 @@ async def process_document(
             status=result.status,
             original_hash=result.original_hash,
             sanitized_hash=result.sanitized_hash,
+            sanitized_path=result.sanitized_path,
             signed_path=result.signed_path,
             signature_serial=result.signature_serial,
             entities_detected=result.entities_detected,
@@ -142,18 +146,20 @@ async def process_document(
     summary="Mask Document",
     description="Apply masking only (no signing). Returns sanitized document.",
 )
-async def mask_document(
+@limiter.limit("30/minute")
+def mask_document(
+    request: Request,
     file: UploadFile = File(..., description="Document to mask (PDF/Image)"),
     policy: str = Form(default="default_policy", description="Detection policy name"),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ProcessResponse:
     """Apply redaction without signing — useful for preview or non-final outputs."""
-    file_path = await _save_upload(file)
+    file_path = _save_upload(file)
 
     try:
         pipeline = DocumentPipeline(db)
-        result = await pipeline.process(
+        result = pipeline.process(
             file_path=file_path,
             filename=file.filename,
             policy_name=policy,
@@ -164,6 +170,7 @@ async def mask_document(
             status=result.status,
             original_hash=result.original_hash,
             sanitized_hash=result.sanitized_hash,
+            sanitized_path=result.sanitized_path,
             entities_detected=result.entities_detected,
             entities_redacted=result.entities_redacted,
             entity_summary=result.entity_summary,

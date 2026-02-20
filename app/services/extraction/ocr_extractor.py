@@ -116,7 +116,12 @@ class OcrExtractor(BaseExtractor):
 
         except ImportError as e:
             raise ExtractionError(
-                message=f"OCR dependency not installed: {str(e)}",
+                message=f"OCR dependency not installed: {str(e)} (try: pip install pytesseract Pillow)",
+                document_id=document_id,
+            )
+        except pytesseract.TesseractNotFoundError:
+            raise ExtractionError(
+                message="Tesseract OCR engine is not installed or not in PATH. Please install Tesseract (https://github.com/tesseract-ocr/tesseract) to process scanned documents.",
                 document_id=document_id,
             )
         except Exception as e:

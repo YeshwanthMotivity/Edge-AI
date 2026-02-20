@@ -14,7 +14,9 @@ def test_health_check(client):
     data = response.json()
     assert data["status"] == "healthy"
     assert data["version"] == "1.0.0"
-    assert "uptime_seconds" in data
+    assert "database" in data
+    assert "signer" in data
+    assert "ocr_engine" in data
     assert "environment" in data
 
 
@@ -33,7 +35,7 @@ def test_auth_login(client):
     """Auth endpoint should return JWT token for valid credentials."""
     response = client.post(
         "/auth/token",
-        json={"username": "admin", "password": "admin123"},
+        data={"username": "admin", "password": "admin123"},
     )
 
     assert response.status_code == 200
@@ -49,16 +51,16 @@ def test_auth_invalid_credentials(client):
     """Auth should return 401 for invalid credentials."""
     response = client.post(
         "/auth/token",
-        json={"username": "admin", "password": "wrong_password"},
+        data={"username": "admin", "password": "wrong_password"},
     )
 
     assert response.status_code == 401
 
 
 def test_protected_endpoint_without_token(client):
-    """Protected endpoints should return 403 without auth token."""
+    """Protected endpoints should return 401 without auth token."""
     response = client.post("/api/v1/analyze")
-    assert response.status_code in (403, 422)  # 403 Forbidden or 422 if missing file
+    assert response.status_code == 401
 
 
 def test_security_headers(client):

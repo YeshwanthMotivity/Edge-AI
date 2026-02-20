@@ -51,3 +51,5 @@ Book.xlsx
 
 # ── Misc ──
 *.log
+test_out.txt
+test_tmp.pdf

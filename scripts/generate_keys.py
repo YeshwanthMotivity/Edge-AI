@@ -21,6 +21,7 @@ def generate_keys(output_dir: str = None):
     from cryptography import x509
     from cryptography.x509.oid import NameOID
     from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.serialization import pkcs12
     from cryptography.hazmat.primitives.asymmetric import rsa
 
     # Output directory
@@ -30,7 +31,7 @@ def generate_keys(output_dir: str = None):
         output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"🔐 Generating signing keys in: {output_dir}")
+    print(f"Generating signing keys in: {output_dir}")
 
     # Generate RSA private key (2048-bit for POC, use 4096 for production)
     private_key = rsa.generate_private_key(
@@ -83,13 +84,13 @@ def generate_keys(output_dir: str = None):
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         ))
-    print(f"  ✅ Private key:  {key_path}")
+    print(f"  [OK] Private key:  {key_path}")
 
     # Save certificate (PEM)
     cert_path = output_dir / "certificate.pem"
     with open(cert_path, "wb") as f:
         f.write(cert.public_bytes(serialization.Encoding.PEM))
-    print(f"  ✅ Certificate:  {cert_path}")
+    print(f"  [OK] Certificate:  {cert_path}")
 
     # Save PKCS#12 keystore
     p12_path = output_dir / "keystore.p12"
@@ -103,11 +104,11 @@ def generate_keys(output_dir: str = None):
     )
     with open(p12_path, "wb") as f:
         f.write(p12_data)
-    print(f"  ✅ PKCS#12:      {p12_path}")
-    print(f"  🔑 P12 password: securedocai_poc")
+    print(f"  [OK] PKCS#12:      {p12_path}")
+    print(f"  [KEY] P12 password: securedocai_poc")
 
-    print("\n✅ All keys generated successfully!")
-    print("⚠️  These are for POC only. Use CA-signed certificates in production.")
+    print("\n[OK] All keys generated successfully!")
+    print("[WARN] These are for POC only. Use CA-signed certificates in production.")
 
 
 if __name__ == "__main__":

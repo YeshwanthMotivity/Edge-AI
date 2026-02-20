@@ -17,6 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.main import app
 from app.db.database import Base, get_db
+from app.models.user import User
+from app.core.security import hash_password
 
 
 # ── Test Database ──
@@ -45,8 +47,26 @@ def override_get_db():
 def setup_test_db():
     """Create test database tables before tests and drop after."""
     Base.metadata.create_all(bind=test_engine)
+    
+    # Insert test admin user
+    db = TestSessionLocal()
+    try:
+        if not db.query(User).filter_by(username="admin").first():
+            user = User(
+                username="admin",
+                hashed_password=hash_password("admin123"),
+                role="admin",
+                is_active=True,
+            )
+            db.add(user)
+            db.commit()
+    finally:
+        db.close()
+        
     yield
     Base.metadata.drop_all(bind=test_engine)
+    test_engine.dispose()
+    
     # Clean up test DB file
     test_db_path = Path("./test_secure_doc_ai.db")
     if test_db_path.exists():
@@ -67,7 +87,7 @@ def auth_headers(client):
     """Get auth headers by logging in as admin."""
     response = client.post(
         "/auth/token",
-        json={"username": "admin", "password": "admin123"},
+        data={"username": "admin", "password": "admin123"},
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

@@ -16,6 +16,8 @@ services:
       - "${APP_PORT:-8000}:8000"
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql://secure_admin:${DB_PASSWORD:-change_me_in_production}@secure-db:5432/secure_doc_ai
     volumes:
       - ./storage/uploads:/app/storage/uploads
       - ./storage/processed:/app/storage/processed

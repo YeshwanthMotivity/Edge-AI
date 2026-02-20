@@ -117,9 +117,12 @@ class RegexDetector(BaseDetector):
                 entities.append(entity)
 
         # Apply confidence threshold and allowlist filtering
-        entities = self.filter_by_confidence(entities, policy.entities.get(
-            entities[0].entity_type.value, type("", (), {"confidence_threshold": 0.85})
-        ).confidence_threshold if entities else 0.85)
+        if entities:
+            first_type = entities[0].entity_type.value
+            threshold = policy.entities[first_type].confidence_threshold if first_type in policy.entities else 0.85
+        else:
+            threshold = 0.85
+        entities = self.filter_by_confidence(entities, threshold)
         entities = self.filter_allowlisted(entities, policy)
 
         logger.info(

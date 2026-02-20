@@ -5,7 +5,7 @@ Shared FastAPI dependencies: auth, database, policy loading.
 """
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -18,13 +18,13 @@ from jose import JWTError
 
 # ── Security Scheme ──
 
-security = HTTPBearer()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
 # ── Auth Dependency ──
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    token: str = Depends(oauth2_scheme),
 ) -> dict:
     """
     Validate JWT token and return current user info.
@@ -36,7 +36,7 @@ async def get_current_user(
         HTTPException 401 if token is invalid.
     """
     try:
-        token_data = decode_access_token(credentials.credentials)
+        token_data = decode_access_token(token)
         return {"username": token_data.username, "role": token_data.role}
     except JWTError:
         raise HTTPException(
