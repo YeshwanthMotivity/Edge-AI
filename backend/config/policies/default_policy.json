@@ -1,0 +1,83 @@
+{
+    "policy_name": "default_policy",
+    "description": "Default detection and masking policy for general documents",
+    "version": "1.0.0",
+    "entities": {
+        "EMAIL": {
+            "enabled": true,
+            "detection_method": "regex",
+            "confidence_threshold": 0.90,
+            "masking_style": "full",
+            "replacement": "[EMAIL REDACTED]"
+        },
+        "PHONE": {
+            "enabled": true,
+            "detection_method": "regex",
+            "confidence_threshold": 0.90,
+            "masking_style": "partial",
+            "replacement": "[PHONE REDACTED]",
+            "partial_mask": "XXX-XXX-{last4}"
+        },
+        "CREDIT_CARD": {
+            "enabled": true,
+            "detection_method": "regex_luhn",
+            "confidence_threshold": 0.95,
+            "masking_style": "partial",
+            "replacement": "[CC REDACTED]",
+            "partial_mask": "XXXX-XXXX-XXXX-{last4}"
+        },
+        "SSN": {
+            "enabled": true,
+            "detection_method": "regex",
+            "confidence_threshold": 0.95,
+            "masking_style": "full",
+            "replacement": "[SSN REDACTED]"
+        },
+        "PERSON_NAME": {
+            "enabled": true,
+            "detection_method": "ner",
+            "confidence_threshold": 0.75,
+            "masking_style": "full",
+            "replacement": "[NAME REDACTED]"
+        },
+        "ADDRESS": {
+            "enabled": true,
+            "detection_method": "ner",
+            "confidence_threshold": 0.75,
+            "masking_style": "full",
+            "replacement": "[ADDRESS REDACTED]"
+        },
+        "ORGANIZATION": {
+            "enabled": true,
+            "detection_method": "ner",
+            "confidence_threshold": 0.80,
+            "masking_style": "full",
+            "replacement": "[ORG REDACTED]"
+        },
+        "DATE_OF_BIRTH": {
+            "enabled": false,
+            "detection_method": "regex",
+            "confidence_threshold": 0.85,
+            "masking_style": "full",
+            "replacement": "[DOB REDACTED]"
+        }
+    },
+    "allowlist": {
+        "emails": [],
+        "phones": [],
+        "names": [],
+        "patterns": []
+    },
+    "signing_required": true,
+    "audit_required": true,
+    "visual_redaction": {
+        "box_color": [
+            0,
+            0,
+            0
+        ],
+        "box_opacity": 1.0,
+        "font_size": 8,
+        "label_redactions": true
+    }
+}

@@ -9,21 +9,21 @@ services:
   # ── Secure Document AI Application ──
   secure-app:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: secure-doc-ai
     ports:
       - "${APP_PORT:-8000}:8000"
     env_file:
-      - .env
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql://secure_admin:${DB_PASSWORD:-change_me_in_production}@secure-db:5432/secure_doc_ai
     volumes:
-      - ./storage/uploads:/app/storage/uploads
-      - ./storage/processed:/app/storage/processed
-      - ./storage/signed:/app/storage/signed
-      - ./storage/keys:/app/storage/keys
-      - ./config/policies:/app/config/policies
+      - ./backend/storage/uploads:/app/storage/uploads
+      - ./backend/storage/processed:/app/storage/processed
+      - ./backend/storage/signed:/app/storage/signed
+      - ./backend/storage/keys:/app/storage/keys
+      - ./backend/config/policies:/app/config/policies
     depends_on:
       secure-db:
         condition: service_healthy
