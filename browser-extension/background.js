@@ -1,42 +1,46 @@
 // Edge Policy AI - Background Service Worker
 console.log("Edge Policy AI background worker active.");
 
-// Handle events from content scripts (e.g., blocked uploads)
+// Handle events from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === 'BLOCK_UPLOAD') {
-        const { filename, reason, url, entities } = message.details;
+    if (message.action === 'BLOCK_UPLOAD' || message.action === 'LOG_ALLOWED') {
+        const details = message.details;
+        const isBlock = message.action === 'BLOCK_UPLOAD';
 
-        console.warn(`[SECURITY EVENT] Blocked upload of ${filename} on ${url}`);
+        console.log(`[POLICY] ${isBlock ? 'Blocked' : 'Allowed'} upload: ${details.filename} on ${details.url}`);
 
-        // Visual indicator on extension icon
-        chrome.action.setBadgeText({ text: '!' });
-        chrome.action.setBadgeBackgroundColor({ color: '#ef4444' });
+        if (isBlock) {
+            // Visual indicator on extension icon
+            chrome.action.setBadgeText({ text: '!' });
+            chrome.action.setBadgeBackgroundColor({ color: '#ef4444' });
 
-        // System-level notification
-        chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'public/icon128.png',
-            title: 'Security Policy Enforcement',
-            message: `Upload of ${filename} was blocked due to sensitive data: ${entities.join(', ')}`,
-            priority: 2
-        });
+            // System-level notification
+            chrome.notifications.create({
+                type: 'basic',
+                iconUrl: 'public/icon128.png',
+                title: 'Security Policy Enforcement',
+                message: `Upload of ${details.filename} was blocked due to sensitive data.`,
+                priority: 2
+            });
+        }
 
-        // Persistent logging in local storage
+        // Persistent logging
         const logEntry = {
+            id: Date.now(),
             timestamp: new Date().toISOString(),
-            action: 'BLOCK',
-            filename,
-            reason,
-            url,
-            entities,
-            user: 'local_dev_user'
+            status: isBlock ? 'BLOCKED' : 'AUTHORIZED',
+            filename: details.filename,
+            reason: details.reason || 'Sanitized / Safe',
+            url: details.url,
+            entities: details.entities || [],
+            user: 'corporate_integrity_user'
         };
 
         chrome.storage.local.get(['blockLogs'], (result) => {
             const logs = result.blockLogs || [];
             logs.unshift(logEntry);
-            // Keep only latest 50 logs
-            chrome.storage.local.set({ blockLogs: logs.slice(0, 50) });
+            // Keep latest 100 entries
+            chrome.storage.local.set({ blockLogs: logs.slice(0, 100) });
         });
     }
 });

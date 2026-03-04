@@ -4,99 +4,168 @@
 <head>
     <title>Edge Policy AI</title>
     <style>
+        :root {
+            --bg-deep: #0f172a;
+            --bg-card: #1e293b;
+            --primary: #c084fc;
+            --primary-glow: rgba(168, 85, 247, 0.4);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #34d399;
+        }
+
         body {
-            font-family: 'Inter', system-ui, sans-serif;
-            padding: 16px;
-            width: 320px;
-            background-color: #0f172a;
-            color: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            padding: 0;
+            width: 380px;
+            background-color: var(--bg-deep);
+            color: var(--text);
             margin: 0;
+            overflow-x: hidden;
         }
 
-        h3 {
-            margin-top: 0;
-            color: #c084fc;
+        .header {
+            padding: 20px;
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, transparent 100%);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .header h3 {
+            margin: 0;
+            color: var(--primary);
             font-size: 18px;
-            margin-bottom: 4px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            letter-spacing: -0.01em;
         }
 
-        p.subtitle {
-            font-size: 12px;
-            color: #94a3b8;
-            margin: 0 0 16px 0;
-            border-bottom: 1px solid #1e293b;
-            padding-bottom: 8px;
-        }
-
-        .status-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            background: #1e293b;
-            padding: 10px;
-            border-radius: 8px;
-        }
-
-        .status {
-            padding: 4px 10px;
-            border-radius: 20px;
-            background: #065f46;
-            color: #34d399;
+        .subtitle {
             font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .log-section h4 {
-            font-size: 13px;
-            color: #e2e8f0;
-            margin: 0 0 10px 0;
+            color: var(--text-muted);
+            margin: 4px 0 0 0;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 0 20px 20px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.05);
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .log-container {
+            padding: 0 20px 20px;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .log-header h4 {
+            font-size: 12px;
+            margin: 0;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
         .log-list {
-            max-height: 200px;
+            max-height: 300px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
 
         .log-item {
-            background: #1e293b;
-            padding: 10px;
-            border-radius: 6px;
-            border-left: 3px solid #ef4444;
-            font-size: 12px;
+            background: var(--bg-card);
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.05);
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .log-item .time {
-            color: #64748b;
+        .log-item.BLOCKED {
+            border-left: 4px solid var(--danger);
+        }
+
+        .log-item.AUTHORIZED {
+            border-left: 4px solid var(--success);
+        }
+
+        .log-meta {
+            display: flex;
+            justify-content: space-between;
             font-size: 10px;
-            margin-bottom: 4px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
         }
 
-        .log-item .filename {
+        .log-filename {
+            font-size: 13px;
             font-weight: 600;
-            color: #f8fafc;
+            margin-bottom: 4px;
             display: block;
-            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .log-item .reason {
-            color: #fca5a5;
+        .log-info {
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 800;
+        }
+
+        .BLOCKED .status-badge {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .AUTHORIZED .status-badge {
+            background: rgba(52, 211, 153, 0.1);
+            color: var(--success);
         }
 
         .no-logs {
             text-align: center;
-            color: #475569;
+            padding: 40px 0;
+            color: var(--text-muted);
             font-size: 12px;
-            padding: 20px 0;
         }
 
         /* Scrollbar */
@@ -104,58 +173,97 @@
             width: 4px;
         }
 
-        .log-list::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
         .log-list::-webkit-scrollbar-thumb {
             background: #334155;
             border-radius: 2px;
+        }
+
+        .footer {
+            padding: 12px 20px;
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: center;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
         }
     </style>
 </head>
 
 <body>
-    <h3>🛡️ Edge Policy AI</h3>
-    <p class="subtitle">Real-time Privacy Protection Active</p>
-
-    <div class="status-container">
-        <span>Protection Node</span>
-        <div class="status">● Linked</div>
+    <div class="header">
+        <h3>🛡️ EDGE POLICY AI</h3>
+        <p class="subtitle">Real-time Privacy Protection</p>
     </div>
 
-    <div class="log-section">
-        <h4>Recent Blocks</h4>
-        <div id="logList" class="log-list">
-            <div class="no-logs">No security events recorded.</div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-value" id="blockedCount">0</span>
+            <span class="stat-label">Blocked</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value" id="allowedCount">0</span>
+            <span class="stat-label">Authorized</span>
         </div>
     </div>
 
+    <div class="log-container">
+        <div class="log-header">
+            <h4>Activity Feed</h4>
+        </div>
+        <div id="logList" class="log-list">
+            <div class="no-logs">Monitoring active. Awaiting activity...</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Protective instance: Corporate Integrity 1.0
+    </div>
+
     <script>
-        // Load logs from storage
-        chrome.storage.local.get(['blockLogs'], (result) => {
-            const logs = result.blockLogs || [];
-            const container = document.getElementById('logList');
+        function updateUI() {
+            chrome.storage.local.get(['blockLogs'], (result) => {
+                const logs = result.blockLogs || [];
+                const container = document.getElementById('logList');
 
-            if (logs.length > 0) {
-                container.innerHTML = '';
-                logs.forEach(log => {
-                    const item = document.createElement('div');
-                    item.className = 'log-item';
-                    const date = new Date(log.timestamp).toLocaleTimeString();
-                    const shortUrl = log.url ? log.url.split('/')[2] : 'Unknown';
-                    item.innerHTML = `
-                        <div class="time">${date} • ${shortUrl}</div>
-                        <span class="filename">${log.filename}</span>
-                        <span class="reason">Blocked: Sensitive data detected</span>
-                    `;
-                    container.appendChild(item);
-                });
+                let blocked = 0;
+                let allowed = 0;
 
-                // Reset badge when popup is opened
+                if (logs.length > 0) {
+                    container.innerHTML = '';
+                    logs.forEach(log => {
+                        if (log.status === 'BLOCKED') blocked++;
+                        else allowed++;
+
+                        const item = document.createElement('div');
+                        item.className = `log-item ${log.status}`;
+
+                        const date = new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        const site = log.url ? log.url.split('/')[2].replace('www.', '') : 'Unknown';
+
+                        item.innerHTML = `
+                            <div class="log-meta">
+                                <span>${date} • ${site}</span>
+                                <span class="status-badge">${log.status}</span>
+                            </div>
+                            <span class="log-filename">${log.filename}</span>
+                            <div class="log-info">
+                                <span>Action: ${log.status === 'BLOCKED' ? 'Intercepted' : 'Sanitized'}</span>
+                            </div>
+                        `;
+                        container.appendChild(item);
+                    });
+                }
+
+                document.getElementById('blockedCount').innerText = blocked;
+                document.getElementById('allowedCount').innerText = allowed;
+
+                // Reset badge
                 chrome.action.setBadgeText({ text: '' });
-            }
-        });
+            });
+        }
+
+        updateUI();
+        // Live update if storage changes
+        chrome.storage.onChanged.addListener(updateUI);
     </script>
 </body>
 
