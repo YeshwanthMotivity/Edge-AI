@@ -26,34 +26,34 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-brand-obsidian text-slate-900 dark:text-white transition-colors duration-500 font-sans">
+    <div className="min-h-screen dark:bg-brand-obsidian text-slate-900 dark:text-white transition-colors duration-500 font-sans">
       <Header currentView={currentView} onNavigate={setCurrentView} />
-
-
 
       <nav className="bg-white/80 dark:bg-brand-obsidian/80 backdrop-blur-md border-b border-slate-200 dark:border-white/5 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8">
             <button
               onClick={() => setCurrentView('dashboard')}
-              className={`flex items-center gap-2 px-4 py-4 text-sm font-bold border-b-2 transition-all duration-300 ${currentView === 'dashboard'
-                ? 'border-brand-violet-600 text-brand-violet-600 dark:text-brand-violet-400 dark:border-brand-violet-400 drop-shadow-[0_0_8px_rgba(107,70,255,0.4)]'
-                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-brand-violet-600 dark:hover:text-brand-violet-400 hover:border-slate-300 dark:hover:border-white/10'
+              className={`flex items-center gap-2 px-4 py-4 text-sm font-bold transition-all duration-300 relative group ${currentView === 'dashboard'
+                ? 'text-brand-violet-600 dark:text-brand-violet-400'
+                : 'text-slate-500 dark:text-slate-400 hover:text-brand-violet-600 dark:hover:text-brand-violet-400'
                 }`}
             >
               <Shield className="w-4 h-4" />
               Dashboard
+              <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-brand-violet-600 dark:bg-brand-violet-400 transition-all duration-300 ${currentView === 'dashboard' ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-75'}`}></span>
             </button>
 
             <button
               onClick={() => setCurrentView('process')}
-              className={`flex items-center gap-2 px-4 py-4 text-sm font-bold border-b-2 transition-all duration-300 ${currentView === 'process'
-                ? 'border-brand-violet-600 text-brand-violet-600 dark:text-brand-violet-400 dark:border-brand-violet-400 drop-shadow-[0_0_8px_rgba(107,70,255,0.4)]'
-                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-brand-violet-600 dark:hover:text-brand-violet-400 hover:border-slate-300 dark:hover:border-white/10'
+              className={`flex items-center gap-2 px-4 py-4 text-sm font-bold transition-all duration-300 relative group ${currentView === 'process'
+                ? 'text-brand-violet-600 dark:text-brand-violet-400'
+                : 'text-slate-500 dark:text-slate-400 hover:text-brand-violet-600 dark:hover:text-brand-violet-400'
                 }`}
             >
               <FileText className="w-4 h-4" />
               Process Document
+              <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-brand-violet-600 dark:bg-brand-violet-400 transition-all duration-300 ${currentView === 'process' ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-75'}`}></span>
             </button>
 
             <button

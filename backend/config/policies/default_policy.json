@@ -60,6 +60,20 @@
             "confidence_threshold": 0.85,
             "masking_style": "full",
             "replacement": "[DOB REDACTED]"
+        },
+        "LINKEDIN": {
+            "enabled": true,
+            "detection_method": "regex",
+            "confidence_threshold": 0.90,
+            "masking_style": "full",
+            "replacement": "[LINKEDIN]"
+        },
+        "URL": {
+            "enabled": true,
+            "detection_method": "regex",
+            "confidence_threshold": 0.90,
+            "masking_style": "full",
+            "replacement": "[URL]"
         }
     },
     "allowlist": {

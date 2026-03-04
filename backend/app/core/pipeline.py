@@ -327,8 +327,21 @@ class DocumentPipeline:
         return content
 
     def _detect(self, content: ExtractedContent, policy: Policy, document_id: str) -> RedactionMap:
-        """Run all detectors and merge results. Regex runs first, and NER skips matched text."""
+        """Run all detectors and merge results. Regex runs first, then NER with deduplication."""
         all_entities = []
+        original_text = content.text
+        
+        # 0. Contextual Header Identification
+        # Identify start/end of "safe" blocks like SKILLS, CERTIFICATIONS, etc.
+        safe_blocks = []
+        header_patterns = [r"(?i)\bSKILLS\b", r"(?i)\bCERTIFICATIONS\b", r"(?i)\bACHIEVEMENTS\b", r"(?i)\bPROJECTS\b"]
+        for pattern in header_patterns:
+            for match in re.finditer(pattern, original_text):
+                # Guess end of block (next header or end of text)
+                block_start = match.start()
+                next_header_match = re.search(r"\n[A-Z ]{5,}\n", original_text[match.end():])
+                block_end = (match.end() + next_header_match.start()) if next_header_match else len(original_text)
+                safe_blocks.append((block_start, block_end))
 
         # 1. Regex detection (Deterministic, Fast)
         try:
@@ -339,16 +352,14 @@ class DocumentPipeline:
 
         # 2. NER detection (AI, Slower)
         try:
-            # Optimization: Mask out text already found by regex so NER doesn't waste cycles on it.
-            modified_text = content.text
+            # Mask out text already found by regex
+            modified_text = original_text
             if modified_text and regex_entities:
                 for entity in sorted(regex_entities, key=lambda e: e.location.start_char, reverse=True):
                     start = entity.location.start_char
                     end = entity.location.end_char
-                    # Replace with spaces to maintain character offsets for NER bounding box resolution
                     modified_text = modified_text[:start] + (" " * (end - start)) + modified_text[end:]
             
-            # Create a temporary content object with the masked text
             ner_content = ExtractedContent(
                 document_id=content.document_id,
                 text=modified_text,
@@ -359,9 +370,41 @@ class DocumentPipeline:
             )
             
             ner_entities = self.ner_detector.detect(ner_content, policy)
-            all_entities.extend(ner_entities)
+            
+            # Filter NER entities based on safe blocks
+            filtered_ner = []
+            for e in ner_entities:
+                is_safe = False
+                for s_start, s_end in safe_blocks:
+                    if s_start <= e.location.start_char <= s_end:
+                        # If it's a name inside SKILLS, skip it unless it's a very high confidence person name
+                        if e.entity_type == EntityType.PERSON_NAME:
+                            is_safe = True
+                            break
+                if not is_safe:
+                    filtered_ner.append(e)
+            
+            all_entities.extend(filtered_ner)
         except Exception as e:
             logger.warning("ner_detection_error", error=str(e))
+
+        # 3. Final Deduplication and Overlap Merge
+        if all_entities:
+            all_entities.sort(key=lambda e: e.location.start_char)
+            merged = []
+            if all_entities:
+                curr = all_entities[0]
+                for nxt in all_entities[1:]:
+                    if nxt.location.start_char < curr.location.end_char:
+                        # Overlap: Keep the one with higher confidence or larger span
+                        if (nxt.location.end_char - nxt.location.start_char) > (curr.location.end_char - curr.location.start_char):
+                            curr = nxt
+                    else:
+                        merged.append(curr)
+                        curr = nxt
+                merged.append(curr)
+            all_entities = merged
+
 
         # Build redaction map
         redaction_map = RedactionMap(

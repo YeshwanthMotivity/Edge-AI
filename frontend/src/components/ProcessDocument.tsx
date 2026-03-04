@@ -177,18 +177,21 @@ export default function ProcessDocument() {
                 )}
 
                 {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-500/10 rounded-2xl p-4 flex items-start gap-3 backdrop-blur-sm">
+                        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5 opacity-70" />
                         <div>
-                            <h4 className="text-sm font-semibold text-red-900 dark:text-red-400 mb-1">Processing Error</h4>
-                            <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                            <h4 className="text-sm font-bold text-red-900 dark:text-red-400 mb-1 leading-none">Processing Error</h4>
+                            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{error}</p>
                         </div>
                     </div>
                 )}
 
+
                 {result && (
                     <>
-                        <div className="glass-card-purple rounded-4xl border border-brand-violet-600/20 shadow-2xl p-8">
+                        <div className="bg-white dark:glass-card-purple rounded-4xl border border-slate-100 dark:border-brand-violet-600/20 shadow-2xl shadow-slate-200/50 dark:shadow-brand-violet-600/10 p-8 transition-all duration-500">
+
+
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                                 <div>
                                     <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">Sanitization Complete</h3>
@@ -216,12 +219,12 @@ export default function ProcessDocument() {
                                     </button>
                                     <button
                                         onClick={handleDownload}
-                                        className="flex items-center gap-2 px-5 py-2.5 bg-white text-brand-obsidian rounded-xl font-black uppercase tracking-widest hover:bg-slate-100 transition-all text-xs shadow-xl active:scale-95"
+                                        className="flex items-center gap-2 px-5 py-2.5 bg-brand-violet-600 dark:bg-white text-white dark:text-brand-obsidian rounded-xl font-black uppercase tracking-widest hover:bg-brand-violet-500 dark:hover:bg-slate-100 transition-all text-xs shadow-lg shadow-brand-violet-600/20 active:scale-95"
                                     >
-
                                         <Download className="w-4 h-4" />
                                         Export PDF
                                     </button>
+
                                 </div>
                             </div>
 

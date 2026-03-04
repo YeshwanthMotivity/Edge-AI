@@ -75,7 +75,7 @@ class NerDetector(BaseDetector):
         self,
         model_name: str = "dslim/bert-base-NER",
         model_path: Optional[str] = None,
-        confidence_threshold: float = 0.72,
+        confidence_threshold: float = 0.80,
         inference_timeout: float = 3.0,
     ):
         self.model_name = model_name
@@ -481,7 +481,9 @@ class NerDetector(BaseDetector):
             detection_method=DetectionMethod.NER,
             location=location,
             masking_style=MaskingStyle.FULL,
+            masked_value=f"[{entity_type.value}]",
         )
+
 
     def _map_entity_group(self, entity_group: str) -> Optional[EntityType]:
         """Map HuggingFace entity_group label to our EntityType enum."""

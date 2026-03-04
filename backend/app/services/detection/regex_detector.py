@@ -44,9 +44,16 @@ PATTERNS = {
         r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
     ),
     EntityType.PHONE: re.compile(
-        # Refined phone regex: strictly requires at least 10 digits and avoids 12-digit Aadhaar
-        r"(?ix)(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}\b"
+        # Matches +91 8008973757, (800) 897-3757, 800-897-3757, etc.
+        r"(?ix)(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}(?:[-.\s]?\d{2,4})?\b"
     ),
+    EntityType.LINKEDIN: re.compile(
+        r"(?i)\b(?:www\.)?linkedin\.com/in/[a-z0-9_-]+\b"
+    ),
+    EntityType.URL: re.compile(
+        r"(?i)\b(?:https?://|www\.)[a-z0-9.-]+\.[a-z]{2,}(?:/[^\s]*)?\b"
+    ),
+
     EntityType.CREDIT_CARD: re.compile(
         # Supports partially masked cards with X or *
         # Matches 13-19 digit-like chars, starting and ending with digits
@@ -62,11 +69,12 @@ PATTERNS = {
         r"\b\d{8,17}\b"
     ),
     EntityType.ADDRESS: re.compile(
-        r"(?i)(?:\b(?:hno|h\.no|plot\s*no|flat\s*no)[\s:.-]*\d+(?:[\w\s.,/-]{1,150})(?:hyderabad|telangana|teleganan)(?:[\s,.-]*\d{6})?\b|"
-        r"\b[\w\s.-]{1,50}(?:nagar|colony|block)[\w\s.,-]{1,100}(?:hyderabad|telangana|teleganan)(?:[\s,.-]*\d{6})?\b|"
-        r"\b(?:hyderabad|telangana|teleganan)\b|"
+        r"(?i)(?:\b(?:hno|h\.no|plot\s*no|flat\s*no)[\s:.-]*\d+(?:[\w\s.,/-]{1,150})(?:hyderabad|telangana|mumbai|delhi|bangalore|pune|chennai|kolkata)(?:[\s,.-]*\d{6})?\b|"
+        r"\b[\w\s.-]{1,50}(?:nagar|colony|block|street|road|st|rd|ave|avenue)[\w\s.,-]{1,100}(?:hyderabad|telangana|mumbai|delhi|bangalore|pune|chennai|kolkata)(?:[\s,.-]*\d{6})?\b|"
+        r"\b(?:hyderabad|telangana|mumbai|delhi|bangalore|pune|chennai|kolkata)\b|"
         r"\b\d{1,5}\s+[a-zA-Z0-9.\s]+(?:St|Street|Ave|Avenue|Rd|Road|Blvd|Boulevard|Ln|Lane|Dr|Drive|Ct|Court|Way|Cir|Circle)[,\s]+[a-zA-Z\s]+[,\s]+[A-Z]{2}\s+\d{5}(?:-\d{4})?\b)"
     ),
+
     EntityType.PERSON_NAME: re.compile(
         rf"(?i:\b(?:Mr|Mrs|Ms|Dr|Shri|Smt|Prof)\.?\s+{NAME_PART}(?:\s+{NAME_PART})*\b(?![-\']))|"
         rf"\b{NAME_PART}\s+[{U_UC}]\.?(?![-\'\w])|"
@@ -185,8 +193,9 @@ class RegexDetector(BaseDetector):
                         page=0,  # Will be mapped to pages in pipeline
                     ),
                     masking_style=MaskingStyle(rule.masking_style),
-                    masked_value=rule.replacement,
+                    masked_value=f"[{entity_type.value}]",
                 )
+
                 entities.append(entity)
 
         # Apply confidence threshold and allowlist filtering

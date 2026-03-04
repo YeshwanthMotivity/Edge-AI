@@ -22,6 +22,8 @@ class EntityType(str, Enum):
     DATE_OF_BIRTH = "DATE_OF_BIRTH"
     ACCOUNT_NUMBER = "ACCOUNT_NUMBER"
     GOVERNMENT_ID = "GOVERNMENT_ID"
+    LINKEDIN = "LINKEDIN"
+    URL = "URL"
 
 
 class DetectionMethod(str, Enum):

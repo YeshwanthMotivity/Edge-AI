@@ -64,9 +64,9 @@ export default function AuditLog() {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 transition-colors duration-200">
             {error && (
-                <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-3 text-red-700 dark:text-red-400">
-                    <AlertCircle className="w-5 h-5" />
-                    <p className="text-sm font-medium">{error}</p>
+                <div className="mb-8 p-4 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-500/10 rounded-2xl flex items-center gap-3 text-red-600 dark:text-red-400 backdrop-blur-sm">
+                    <AlertCircle className="w-5 h-5 opacity-70" />
+                    <p className="text-sm font-bold tracking-tight">{error}</p>
                 </div>
             )}
 
@@ -79,15 +79,18 @@ export default function AuditLog() {
                 </div>
                 <button
                     onClick={() => window.open('/api/v1/audit/export', '_blank')}
-                    className="flex items-center justify-center gap-3 bg-white text-brand-obsidian px-6 py-3 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-100 transition-all shrink-0 shadow-2xl active:scale-95 border border-transparent shadow-brand-violet-600/10"
+                    className="flex items-center justify-center gap-3 bg-brand-violet-600 dark:bg-white text-white dark:text-brand-obsidian px-6 py-3 rounded-2xl font-black uppercase tracking-widest hover:bg-brand-violet-500 dark:hover:bg-slate-100 transition-all shrink-0 shadow-xl shadow-brand-violet-600/20 active:scale-95 border border-transparent"
                 >
                     <Download className="w-5 h-5" />
                     <span>Download Logs</span>
                 </button>
+
             </div>
 
 
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/5 shadow-xl transition-colors duration-200 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 transition-colors duration-200 overflow-hidden">
+
+
                 <div className="p-6 border-b border-slate-100 dark:border-white/5">
                     <div className="flex flex-col sm:flex-row gap-6">
                         <div className="flex-1 relative">

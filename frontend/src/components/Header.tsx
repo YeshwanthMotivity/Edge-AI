@@ -42,10 +42,11 @@ export default function Header({ onNavigate }: HeaderProps) {
                             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                         </button>
 
-                        <div className="flex items-center gap-3 px-5 py-2 bg-brand-violet-950/30 dark:bg-brand-violet-950/40 border border-brand-violet-600/20 rounded-2xl shadow-inner group hover:border-brand-violet-600/50 transition-colors">
+                        <div className="flex items-center gap-3 px-5 py-2 bg-brand-violet-50 dark:bg-brand-violet-950/40 border border-brand-violet-200 dark:border-brand-violet-600/20 rounded-2xl shadow-sm group hover:border-brand-violet-600/50 transition-colors">
                             <div className="w-2.5 h-2.5 bg-brand-violet-600 rounded-full animate-[pulse_2s_infinite] shadow-[0_0_10px_rgba(107,70,255,0.6)]"></div>
                             <span className="text-xs font-black text-brand-violet-600 dark:text-brand-violet-400 uppercase tracking-widest">Local Mode</span>
                         </div>
+
                     </div>
                 </div>
             </div>
