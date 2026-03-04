@@ -26,6 +26,50 @@ class TokenResponse(BaseModel):
     username: str
     role: str
 
+class UserCreate(BaseModel):
+    """Schema for user registration."""
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=6)
+
+@router.post(
+    "/register",
+    response_model=TokenResponse,
+    summary="Register New User",
+    description="Create a new user account and receive an initial access token.",
+)
+@limiter.limit("5/minute")
+async def register(
+    request: Request,
+    user_data: UserCreate,
+    db: Session = Depends(get_db),
+) -> TokenResponse:
+    """Register a new user in the database."""
+    existing_user = db.query(User).filter(User.username == user_data.username).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already registered"
+        )
+    
+    new_user = User(
+        username=user_data.username,
+        hashed_password=hash_password(user_data.password),
+        role="operator",
+        is_active=True
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    access_token = create_access_token(
+        data={"sub": new_user.username, "role": new_user.role}
+    )
+    
+    return TokenResponse(
+        access_token=access_token,
+        username=new_user.username,
+        role=new_user.role,
+    )
 
 @router.post(
     "/token",

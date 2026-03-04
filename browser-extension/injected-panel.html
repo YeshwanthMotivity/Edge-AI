@@ -453,12 +453,26 @@
     <!-- VIEW 1: LOGIN -->
     <div id="loginView" class="view active">
         <div class="login-box">
-            <div class="login-title">Corporate Sign-In</div>
+            <div class="login-title" id="authTitle">Corporate Sign-In</div>
+            <div id="authErrorMsg" style="color: var(--danger); font-size: 11px; margin-bottom: 10px; display: none;">
+            </div>
+
             <div class="input-group">
-                <label for="usernameInput">Employee ID / Username</label>
+                <label for="usernameInput">Username</label>
                 <input type="text" id="usernameInput" class="login-input" placeholder="e.g. yash.m" autocomplete="off">
             </div>
-            <button id="loginBtn" class="action-btn">Authenticate</button>
+            <div class="input-group">
+                <label for="passwordInput">Password</label>
+                <input type="password" id="passwordInput" class="login-input" placeholder="••••••••">
+            </div>
+
+            <button id="authBtn" class="action-btn">Authenticate</button>
+
+            <p style="font-size: 10px; color: var(--text-muted); margin-top: 15px;">
+                <span id="authToggleText">Need an account?</span>
+                <a href="#" id="authToggleBtn"
+                    style="color: var(--primary); text-decoration: none; font-weight: bold;">Register</a>
+            </p>
         </div>
     </div>
 

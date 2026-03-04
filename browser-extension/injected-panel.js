@@ -1,21 +1,48 @@
 // injected-panel.js
+// injected-panel.js
 const loginView = document.getElementById('loginView');
 const mainView = document.getElementById('mainView');
 const logoutBtn = document.getElementById('logoutBtn');
-const loginBtn = document.getElementById('loginBtn');
+const authBtn = document.getElementById('authBtn');
+const authToggleBtn = document.getElementById('authToggleBtn');
+const authToggleText = document.getElementById('authToggleText');
+const authTitle = document.getElementById('authTitle');
+const authErrorMsg = document.getElementById('authErrorMsg');
 const usernameInput = document.getElementById('usernameInput');
+const passwordInput = document.getElementById('passwordInput');
 const userFooterLabel = document.getElementById('userFooterLabel');
 const closePanelBtn = document.getElementById('closePanelBtn');
+
+let isRegisterMode = false;
 
 // Talk to parent window to close the iframe
 closePanelBtn.addEventListener('click', () => {
     window.parent.postMessage({ action: 'EDGE_POLICY_CLOSE_PANEL' }, '*');
 });
 
+// Auth Toggle Mode
+authToggleBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    isRegisterMode = !isRegisterMode;
+    authErrorMsg.style.display = 'none';
+
+    if (isRegisterMode) {
+        authTitle.innerText = 'Create Account';
+        authBtn.innerText = 'Register';
+        authToggleText.innerText = 'Already have an account?';
+        authToggleBtn.innerText = 'Sign In';
+    } else {
+        authTitle.innerText = 'Corporate Sign-In';
+        authBtn.innerText = 'Authenticate';
+        authToggleText.innerText = 'Need an account?';
+        authToggleBtn.innerText = 'Register';
+    }
+});
+
 // Authentication Logic
 function checkAuth() {
-    chrome.storage.local.get(['edgePolicyUser'], (result) => {
-        if (result.edgePolicyUser) {
+    chrome.storage.local.get(['edgePolicyUser', 'edgePolicyToken'], (result) => {
+        if (result.edgePolicyUser && result.edgePolicyToken) {
             // Logged in
             loginView.classList.remove('active');
             mainView.classList.add('active');
@@ -32,23 +59,82 @@ function checkAuth() {
     });
 }
 
-loginBtn.addEventListener('click', () => {
+const API_BASE = 'http://127.0.0.1:8000/api/v1';
+
+authBtn.addEventListener('click', async () => {
     const user = usernameInput.value.trim();
-    if (user) {
-        chrome.storage.local.set({ edgePolicyUser: user }, () => {
+    const pass = passwordInput.value.trim();
+
+    if (!user || pass.length < 6) {
+        showAuthError("Please provide a username and at least 6 characters for password.");
+        return;
+    }
+
+    authBtn.disabled = true;
+    authBtn.innerText = 'Processing...';
+    authErrorMsg.style.display = 'none';
+
+    try {
+        let endpoint = `${API_BASE}/auth/token`;
+        let bodyPayload;
+        let headers = {};
+
+        if (isRegisterMode) {
+            endpoint = `${API_BASE}/auth/register`;
+            headers['Content-Type'] = 'application/json';
+            bodyPayload = JSON.stringify({ username: user, password: pass });
+        } else {
+            // OAuth2 Form Data for login
+            headers['Content-Type'] = 'application/x-www-form-urlencoded';
+            bodyPayload = new URLSearchParams({
+                username: user,
+                password: pass
+            }).toString();
+        }
+
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: headers,
+            body: bodyPayload
+        });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || "Authentication Failed");
+        }
+
+        const data = await res.json();
+
+        chrome.storage.local.set({
+            edgePolicyUser: data.username,
+            edgePolicyToken: data.access_token
+        }, () => {
             usernameInput.value = '';
+            passwordInput.value = '';
             checkAuth();
         });
+
+    } catch (err) {
+        showAuthError(err.message);
+    } finally {
+        authBtn.disabled = false;
+        authBtn.innerText = isRegisterMode ? 'Register' : 'Authenticate';
     }
 });
 
+function showAuthError(msg) {
+    authErrorMsg.innerText = msg;
+    authErrorMsg.style.display = 'block';
+}
+
 logoutBtn.addEventListener('click', () => {
-    chrome.storage.local.remove('edgePolicyUser', () => {
+    chrome.storage.local.remove(['edgePolicyUser', 'edgePolicyToken'], () => {
         checkAuth();
     });
 });
 
 checkAuth(); // Initial Check
+
 
 // Tab Switching Logic
 document.querySelectorAll('.tab-btn').forEach(button => {
