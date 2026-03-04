@@ -133,18 +133,20 @@ class RegexDetector(BaseDetector):
                 if len(value) < 3:
                     continue
 
-                # NEW: Skip matches that are likely labels/headers
-                # (end with common separators contextually: :, >, -, |, —)
-                full_text = content.text
-                if match.end() < len(full_text):
-                    next_char = full_text[match.end()].strip()
-                    if next_char in [":", ">", "|", "—"] or (next_char == "-" and match.end() + 1 < len(full_text) and full_text[match.end()+1] == " "):
+                # NEW: Skip matches that are likely labels/headers (ONLY for Names/Orgs/Address)
+                # But NEVER skip Email, Phone, SSN, or other structured values
+                if entity_type in [EntityType.PERSON_NAME, EntityType.ORGANIZATION, EntityType.ADDRESS]:
+                    full_text = content.text
+                    if match.end() < len(full_text):
+                        next_char = full_text[match.end()].strip()
+                        if next_char in [":", ">", "|", "—"] or (next_char == "-" and match.end() + 1 < len(full_text) and full_text[match.end()+1] == " "):
+                            continue
+                    
+                    # Also skip if it's a label followed by whitespace and then a separator
+                    context_after = full_text[match.end():match.end()+5]
+                    if re.match(r"^\s*[:>|—]", context_after):
                         continue
-                
-                # Also skip if it's a label followed by whitespace and then a separator
-                context_after = full_text[match.end():match.end()+5]
-                if re.match(r"^\s*[:>|—]", context_after):
-                    continue
+
 
                 # Filter against PII Blacklist for Names and Organizations
                 if entity_type in [EntityType.PERSON_NAME, EntityType.ORGANIZATION]:

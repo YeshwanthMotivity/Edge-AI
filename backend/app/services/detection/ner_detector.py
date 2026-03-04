@@ -324,17 +324,20 @@ class NerDetector(BaseDetector):
                 if any(t in PII_BLACKLIST for t in tokens):
                     continue
                 
-                # Label Check: Skip if followed by common label separators contextually
-                text_len = len(content.text)
-                if e.location.end_char < text_len:
-                    next_char = content.text[e.location.end_char].strip()
-                    if next_char in [":", ">", "|", "—"] or (next_char == "-" and e.location.end_char + 1 < text_len and content.text[e.location.end_char+1] == " "):
+                # Label Check: Skip ONLY if it's likely a label (Names/Orgs/Address) 
+                # Avoid skipping legitimate PII followed by separators like | in resumes.
+                if e.entity_type in [EntityType.PERSON_NAME, EntityType.ORGANIZATION, EntityType.ADDRESS]:
+                    text_len = len(content.text)
+                    if e.location.end_char < text_len:
+                        next_char = content.text[e.location.end_char].strip()
+                        if next_char in [":", ">", "|", "—"] or (next_char == "-" and e.location.end_char + 1 < text_len and content.text[e.location.end_char+1] == " "):
+                            continue
+                    
+                    # Also skip if it's a label followed by whitespace and then a separator
+                    context_after = content.text[e.location.end_char:e.location.end_char+5]
+                    if re.match(r"^\s*[:>|—]", context_after):
                         continue
-                
-                # Also skip if it's a label followed by whitespace and then a separator
-                context_after = content.text[e.location.end_char:e.location.end_char+5]
-                if re.match(r"^\s*[:>|—]", context_after):
-                    continue
+
                 
                 filtered_entities.append(e)
             
