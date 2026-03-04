@@ -48,13 +48,20 @@ PATTERNS = {
         r"(?ix)(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}(?:[-.\s]?\d{2,4})?\b"
     ),
     EntityType.LINKEDIN: re.compile(
-        r"(?i)\b(?:www\.)?linkedin\.com/in/[a-z0-9_-]+\b"
+        # Matches linkedin.com/in/... OR plain 'Linkedin' if it's likely a profile link
+        r"(?i)\b(?:www\.)?linkedin\.com/in/[a-z0-9_-]+\b|\bLinkedin\b"
     ),
+
     EntityType.URL: re.compile(
         r"(?i)\b(?:https?://|www\.)[a-z0-9.-]+\.[a-z]{2,}(?:/[^\s]*)?\b"
     ),
 
+    EntityType.ADDRESS: re.compile(
+        # Matches generic Address patterns: Street/City, State, Zip/Pin, Country
+        r"(?ix)\b(?:[A-Z][a-z]+(?:[\s,]+[A-Z][a-z]+)*[\s,]+)?(?:[A-Z]{2,}[\s,]+)?\d{5,6}(?:[\s,]+[A-Z][a-z]+)*\b"
+    ),
     EntityType.CREDIT_CARD: re.compile(
+
         # Supports partially masked cards with X or *
         # Matches 13-19 digit-like chars, starting and ending with digits
         r"\b\d[ \-*X\d]{11,17}\d\b"

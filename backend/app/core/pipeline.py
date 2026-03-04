@@ -406,13 +406,27 @@ class DocumentPipeline:
             if all_entities:
                 curr = all_entities[0]
                 for nxt in all_entities[1:]:
-                    if nxt.location.start_char < curr.location.end_char:
-                        # Overlap: Keep the one with higher confidence or larger span
-                        if (nxt.location.end_char - nxt.location.start_char) > (curr.location.end_char - curr.location.start_char):
-                            curr = nxt
+                    # Standard overlap check
+                    is_overlap = nxt.location.start_char < curr.location.end_char
+                    
+                    # PROXIMAL MERGE for ADDRESS (merge if within 25 chars)
+                    is_proximal_address = (
+                        curr.entity_type == EntityType.ADDRESS and 
+                        nxt.entity_type == EntityType.ADDRESS and 
+                        (nxt.location.start_char - curr.location.end_char) < 25
+                    )
+                    
+                    if is_overlap or is_proximal_address:
+                        # Merge the spans
+                        new_start = min(curr.location.start_char, nxt.location.start_char)
+                        new_end = max(curr.location.end_char, nxt.location.end_char)
+                        curr.location.start_char = new_start
+                        curr.location.end_char = new_end
+                        curr.confidence = max(curr.confidence, nxt.confidence)
                     else:
                         merged.append(curr)
                         curr = nxt
+
                 merged.append(curr)
             all_entities = merged
 
