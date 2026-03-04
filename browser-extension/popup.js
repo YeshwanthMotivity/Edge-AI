@@ -1,3 +1,17 @@
+// Tab Switching Logic
+document.querySelectorAll('.tab-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        // Remove active class from all buttons and tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        // Add active class to clicked button and target tab
+        button.classList.add('active');
+        document.getElementById(button.dataset.target).classList.add('active');
+    });
+});
+
+// Logs UI Logic
 function updateUI() {
     chrome.storage.local.get(['blockLogs'], (result) => {
         const logs = result.blockLogs || [];
@@ -40,8 +54,117 @@ function updateUI() {
     });
 }
 
+// Ensure DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     updateUI();
-    // Live update if storage changes
     chrome.storage.onChanged.addListener(updateUI);
+
+    // Sanitize Tab Logic
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const sanitizeBtn = document.getElementById('sanitizeBtn');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const resultDiv = document.getElementById('sanitizeResult');
+
+    let selectedFile = null;
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            handleFileSelection(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+            handleFileSelection(fileInput.files[0]);
+        }
+    });
+
+    function handleFileSelection(file) {
+        selectedFile = file;
+        fileNameDisplay.innerText = file.name;
+        fileNameDisplay.style.color = 'var(--text)';
+        sanitizeBtn.style.display = 'block';
+        resultDiv.style.display = 'none';
+
+        // Allowed sizes & types check
+        const allowedTypes = ['.pdf', '.png', '.jpg', '.jpeg', '.tiff'];
+        const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        if (!allowedTypes.includes(ext)) {
+            showResult('Unsupported file type. Use PDF, PNG, or JPG.', 'error');
+            sanitizeBtn.disabled = true;
+        } else {
+            sanitizeBtn.disabled = false;
+        }
+    }
+
+    function showResult(message, type) {
+        resultDiv.textContent = message;
+        resultDiv.className = type; // 'success' or 'error'
+        resultDiv.style.display = 'block';
+    }
+
+    sanitizeBtn.addEventListener('click', async () => {
+        if (!selectedFile) return;
+
+        // Loading state
+        sanitizeBtn.disabled = true;
+        sanitizeBtn.innerText = 'Sanitizing...';
+        showResult('Processing and redacting document...', 'success');
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('policy', 'default_policy');
+
+        try {
+            // Initiate Redaction
+            const response = await fetch('http://127.0.0.1:8000/api/v1/mask', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                // Determine if backend proxy or actual error response
+                let errorMsg = 'Failed to connect to Background Core';
+                try {
+                    const errPayload = await response.json();
+                    errorMsg = errPayload.detail || errorMsg;
+                } catch (e) { }
+                throw new Error(errorMsg);
+            }
+
+            const result = await response.json();
+
+            // Download the document directly from backend
+            const downloadUrl = `http://127.0.0.1:8000/api/v1/documents/${result.document_id}/download?type=sanitized`;
+
+            showResult(`Sanitization complete. Neutralized ${result.entities_redacted} risks. Downloading...`, 'success');
+
+            // Trigger Chrome Download via extension api
+            chrome.downloads.download({
+                url: downloadUrl,
+                filename: `Sanitized_${selectedFile.name}`
+            });
+
+        } catch (error) {
+            console.error(error);
+            showResult(error.message, 'error');
+        } finally {
+            sanitizeBtn.disabled = false;
+            sanitizeBtn.innerText = 'Sanitize & Download';
+        }
+    });
 });
