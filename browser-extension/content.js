@@ -182,3 +182,97 @@ window.addEventListener('change', handleUploadEvent, true);
 window.addEventListener('drop', handleUploadEvent, true);
 window.addEventListener('paste', handleUploadEvent, true);
 window.addEventListener('dragover', (e) => e.preventDefault(), true);
+
+/**
+ * Injected Side Panel UI
+ */
+function injectEdgePolicyPanel() {
+    if (document.getElementById('edge-policy-fab')) return;
+
+    // 1. Create the Floating Action Button (FAB)
+    const fab = document.createElement('div');
+    fab.id = 'edge-policy-fab';
+    fab.style.cssText = `
+        position: fixed !important;
+        bottom: 24px !important;
+        right: 24px !important;
+        width: 48px !important;
+        height: 48px !important;
+        background: linear-gradient(135deg, #8b5cf6, #c084fc) !important;
+        border-radius: 50% !important;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        z-index: 2147483646 !important;
+        font-size: 24px !important;
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        user-select: none !important;
+    `;
+    fab.innerHTML = '🛡️';
+    fab.title = "Edge Policy AI";
+
+    fab.addEventListener('mouseenter', () => fab.style.transform = 'scale(1.1)');
+    fab.addEventListener('mouseleave', () => fab.style.transform = 'scale(1)');
+
+    // 2. Create the hidden Iframe Container
+    const panelContainer = document.createElement('iframe');
+    panelContainer.id = 'edge-policy-iframe';
+    panelContainer.src = chrome.runtime.getURL('injected-panel.html');
+    panelContainer.style.cssText = `
+        position: fixed !important;
+        top: 24px !important;
+        right: 24px !important;
+        width: 380px !important;
+        height: calc(100vh - 100px) !important;
+        max-height: 800px !important;
+        border: 1px solid rgba(192, 132, 252, 0.3) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
+        z-index: 2147483647 !important;
+        background: transparent !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
+        transform: translateX(120%) !important;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        color-scheme: dark !important;
+    `;
+
+    document.documentElement.appendChild(fab);
+    document.documentElement.appendChild(panelContainer);
+
+    let isOpen = false;
+
+    // 3. Toggle Logic
+    const togglePanel = () => {
+        isOpen = !isOpen;
+        if (isOpen) {
+            panelContainer.style.pointerEvents = 'auto';
+            panelContainer.style.opacity = '1';
+            panelContainer.style.transform = 'translateX(0)';
+            fab.style.boxShadow = '0 0 20px rgba(192, 132, 252, 0.8)';
+        } else {
+            panelContainer.style.pointerEvents = 'none';
+            panelContainer.style.opacity = '0';
+            panelContainer.style.transform = 'translateX(120%)';
+            fab.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset';
+        }
+    };
+
+    fab.addEventListener('click', togglePanel);
+
+    // 4. Listen for close message from the iframe
+    window.addEventListener('message', (event) => {
+        if (event.data && event.data.action === 'EDGE_POLICY_CLOSE_PANEL') {
+            if (isOpen) togglePanel();
+        }
+    });
+}
+
+// Ensure the panel is injected when the DOM is ready, or immediately if already loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectEdgePolicyPanel);
+} else {
+    injectEdgePolicyPanel();
+}

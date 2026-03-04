@@ -3,6 +3,14 @@ console.log("Edge Policy AI background worker active.");
 
 // Handle events from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'DOWNLOAD_SANITIZED') {
+        chrome.downloads.download({
+            url: message.details.url,
+            filename: message.details.filename
+        });
+        return;
+    }
+
     if (message.action === 'BLOCK_UPLOAD' || message.action === 'LOG_ALLOWED') {
         const details = message.details;
         const isBlock = message.action === 'BLOCK_UPLOAD';
@@ -24,19 +32,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             });
         }
 
-        // Persistent logging
-        const logEntry = {
-            id: Date.now(),
-            timestamp: new Date().toISOString(),
-            status: isBlock ? 'BLOCKED' : 'AUTHORIZED',
-            filename: details.filename,
-            reason: details.reason || 'Sanitized / Safe',
-            url: details.url,
-            entities: details.entities || [],
-            user: 'corporate_integrity_user'
-        };
+        // Fetch current user and log
+        chrome.storage.local.get(['blockLogs', 'edgePolicyUser'], (result) => {
+            const currentUser = result.edgePolicyUser || 'Unauthenticated User';
 
-        chrome.storage.local.get(['blockLogs'], (result) => {
+            const logEntry = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                status: isBlock ? 'BLOCKED' : 'AUTHORIZED',
+                filename: details.filename,
+                reason: details.reason || 'Sanitized / Safe',
+                url: details.url,
+                entities: details.entities || [],
+                user: currentUser
+            };
+
             const logs = result.blockLogs || [];
             logs.unshift(logEntry);
             // Keep latest 100 entries
@@ -44,4 +54,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
     }
 });
-

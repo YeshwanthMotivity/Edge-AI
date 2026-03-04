@@ -32,5 +32,15 @@
     "action": {
         "default_popup": "popup.html",
         "default_title": "Edge Policy AI Protection"
-    }
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "injected-panel.html"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
 }

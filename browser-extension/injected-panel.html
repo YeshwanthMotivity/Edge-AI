@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Edge Policy AI Panel</title>
+    <style>
+        :root {
+            --bg-deep: #0f172a;
+            --bg-card: #1e293b;
+            --primary: #c084fc;
+            --primary-glow: rgba(168, 85, 247, 0.4);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #34d399;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            padding: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: var(--bg-deep);
+            color: var(--text);
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .view.active {
+            display: flex;
+        }
+
+        /* --- Header --- */
+        .header {
+            padding: 20px;
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, transparent 100%);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            position: relative;
+        }
+
+        .header h3 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin: 4px 0 0 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        #closePanelBtn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(148, 163, 184, 0.1);
+            border: none;
+            color: var(--text);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #closePanelBtn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        #logoutBtn {
+            position: absolute;
+            top: 20px;
+            right: 54px;
+            background: rgba(148, 163, 184, 0.1);
+            border: none;
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        #logoutBtn:hover {
+            color: var(--text);
+            background: rgba(148, 163, 184, 0.2);
+        }
+
+        /* --- Login View --- */
+        #loginView {
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .login-box {
+            background: var(--bg-card);
+            border: 1px solid rgba(192, 132, 252, 0.3);
+            border-radius: 12px;
+            padding: 30px 20px;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 0 40px rgba(168, 85, 247, 0.1);
+            text-align: center;
+        }
+
+        .login-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .login-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+        }
+
+        /* --- Main App View --- */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 12px 0;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+            font-family: inherit;
+        }
+
+        .tab-btn:hover {
+            color: var(--text);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.05);
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Log List */
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .log-header h4 {
+            font-size: 12px;
+            margin: 0;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .log-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .log-item {
+            background: var(--bg-card);
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.05);
+            transition: all 0.2s;
+        }
+
+        .log-item.BLOCKED {
+            border-left: 4px solid var(--danger);
+        }
+
+        .log-item.AUTHORIZED {
+            border-left: 4px solid var(--success);
+        }
+
+        .log-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .log-filename {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: block;
+            word-break: break-all;
+        }
+
+        .log-info {
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 800;
+        }
+
+        .BLOCKED .status-badge {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .AUTHORIZED .status-badge {
+            background: rgba(52, 211, 153, 0.1);
+            color: var(--success);
+        }
+
+        .no-logs {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Sanitize Tab */
+        .upload-area {
+            border: 2px dashed rgba(148, 163, 184, 0.4);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: rgba(30, 41, 59, 0.3);
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(168, 85, 247, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .upload-text {
+            font-size: 13px;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .upload-subtext {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .action-btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 15px;
+            font-family: inherit;
+        }
+
+        #sanitizeBtn {
+            display: none;
+        }
+
+        .action-btn:hover {
+            background: #a855f7;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .action-btn:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #sanitizeResult {
+            margin-top: 15px;
+            font-size: 12px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        #sanitizeResult.success {
+            background: rgba(52, 211, 153, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+        }
+
+        #sanitizeResult.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 2px;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 12px 20px;
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: center;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            background: var(--bg-deep);
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-tag {
+            color: var(--primary);
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h3>🛡️ EDGE POLICY AI</h3>
+        <p class="subtitle">Real-time Privacy Protection</p>
+        <button id="logoutBtn" style="display:none;">Logout</button>
+        <button id="closePanelBtn">✕</button>
+    </div>
+
+    <!-- VIEW 1: LOGIN -->
+    <div id="loginView" class="view active">
+        <div class="login-box">
+            <div class="login-title">Corporate Sign-In</div>
+            <div class="input-group">
+                <label for="usernameInput">Employee ID / Username</label>
+                <input type="text" id="usernameInput" class="login-input" placeholder="e.g. yash.m" autocomplete="off">
+            </div>
+            <button id="loginBtn" class="action-btn">Authenticate</button>
+        </div>
+    </div>
+
+    <!-- VIEW 2: MAIN APP -->
+    <div id="mainView" class="view">
+        <div class="tabs">
+            <button class="tab-btn active" data-target="feed-tab">Logs</button>
+            <button class="tab-btn" data-target="sanitize-tab">Process Document</button>
+        </div>
+
+        <div id="feed-tab" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-value" id="blockedCount">0</span>
+                    <span class="stat-label">Blocked</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="allowedCount">0</span>
+                    <span class="stat-label">Authorized</span>
+                </div>
+            </div>
+
+            <div class="log-header">
+                <h4>Recent Activity</h4>
+            </div>
+            <div id="logList" class="log-list">
+                <div class="no-logs">Monitoring active. Awaiting activity...</div>
+            </div>
+        </div>
+
+        <div id="sanitize-tab" class="tab-content">
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 20px 0;">
+                Securely redact sensitive Personal Identifiable Information (PII) before sharing. Processing happens
+                securely and documents are auto-downloaded.
+            </p>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text">Select Document to Sanitize</div>
+                <div class="upload-subtext" id="fileNameDisplay">Supports PDF, JPG, PNG</div>
+                <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tiff">
+            </div>
+
+            <button id="sanitizeBtn" class="action-btn">Sanitize & Download</button>
+            <div id="sanitizeResult"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Instance: <span id="userFooterLabel" class="user-tag">Unauthenticated</span>
+    </div>
+
+    <script src="injected-panel.js"></script>
+</body>
+
+</html>
