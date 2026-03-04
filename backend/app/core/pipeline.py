@@ -26,7 +26,8 @@ from app.core.exceptions import (
     SigningError, AuditError, DocumentValidationError,
 )
 from app.models.document import ExtractedContent, ProcessingResult, ProcessingStatus
-from app.models.entity import RedactionMap
+from app.models.entity import RedactionMap, EntityType
+
 from app.models.policy import Policy, PolicyLoader
 from app.services.extraction.pdf_extractor import PdfExtractor
 from app.services.extraction.ocr_extractor import OcrExtractor
