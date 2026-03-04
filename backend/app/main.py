@@ -25,7 +25,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config.settings import get_settings
 from app.db.database import init_db
 from app.models.user import User  # Ensure User is registered for init_db
-from app.api.routes import health, auth, documents, audit, policies
+from app.api.routes import health, auth, documents, audit, policies, pre_check
+
 from app.api.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from app.core.exceptions import SecureDocAIError
 from app.core.rate_limiter import setup_rate_limiting
@@ -152,6 +153,8 @@ app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(audit.router)
 app.include_router(policies.router)
+app.include_router(pre_check.router)
+
 
 
 # ── Root Redirect ──

@@ -114,3 +114,13 @@ class HealthResponse(BaseModel):
     database: str = "unknown"
     signer: str = "unknown"
     ocr_engine: str = "unknown"
+
+
+class PreCheckResponse(BaseModel):
+    """Real-time response for browser extension uploads."""
+    authorized: bool = Field(..., description="Whether the document is allowed for upload")
+    reason: str = Field(..., description="Reason for block or approval")
+    detected_entities: list[str] = Field(default_factory=list, description="List of sensitive entity types found")
+    document_id: Optional[str] = Field(None, description="Temporary processing ID for logging")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
