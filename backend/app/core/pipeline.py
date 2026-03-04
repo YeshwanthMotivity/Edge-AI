@@ -334,14 +334,24 @@ class DocumentPipeline:
         # 0. Contextual Header Identification
         # Identify start/end of "safe" blocks like SKILLS, CERTIFICATIONS, etc.
         safe_blocks = []
-        header_patterns = [r"(?i)\bSKILLS\b", r"(?i)\bCERTIFICATIONS\b", r"(?i)\bACHIEVEMENTS\b", r"(?i)\bPROJECTS\b"]
+        header_patterns = [
+            r"(?i)\bSKILLS\b", 
+            r"(?i)\bCERTIFICATIONS?\b", 
+            r"(?i)\bACHIEVEMENTS?\b", 
+            r"(?i)\bPROJECTS?\b",
+            r"(?i)\bACADEMIC\b",
+            r"(?i)\bEXTRACURRICULAR\b"
+        ]
         for pattern in header_patterns:
             for match in re.finditer(pattern, original_text):
-                # Guess end of block (next header or end of text)
+                # Guess end of block: next all-caps header on a new line or end of text
                 block_start = match.start()
-                next_header_match = re.search(r"\n[A-Z ]{5,}\n", original_text[match.end():])
+                # Find the next potential section header (Line with 5+ uppercase chars/spaces)
+                # We skip the current match by starting search from match.end()
+                next_header_match = re.search(r"\n\s*[A-Z\s&]{5,}\s*\n", original_text[match.end():])
                 block_end = (match.end() + next_header_match.start()) if next_header_match else len(original_text)
                 safe_blocks.append((block_start, block_end))
+
 
         # 1. Regex detection (Deterministic, Fast)
         try:

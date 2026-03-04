@@ -8,14 +8,14 @@
             "detection_method": "regex",
             "confidence_threshold": 0.90,
             "masking_style": "full",
-            "replacement": "[EMAIL REDACTED]"
+            "replacement": "[EMAIL]"
         },
         "PHONE": {
             "enabled": true,
             "detection_method": "regex",
             "confidence_threshold": 0.90,
             "masking_style": "partial",
-            "replacement": "[PHONE REDACTED]",
+            "replacement": "[PHONE]",
             "partial_mask": "XXX-XXX-{last4}"
         },
         "CREDIT_CARD": {
@@ -23,7 +23,7 @@
             "detection_method": "regex_luhn",
             "confidence_threshold": 0.95,
             "masking_style": "partial",
-            "replacement": "[CC REDACTED]",
+            "replacement": "[CREDIT_CARD]",
             "partial_mask": "XXXX-XXXX-XXXX-{last4}"
         },
         "SSN": {
@@ -31,28 +31,28 @@
             "detection_method": "regex",
             "confidence_threshold": 0.95,
             "masking_style": "full",
-            "replacement": "[SSN REDACTED]"
+            "replacement": "[SSN]"
         },
         "PERSON_NAME": {
             "enabled": true,
             "detection_method": "ner",
             "confidence_threshold": 0.75,
             "masking_style": "full",
-            "replacement": "[NAME REDACTED]"
+            "replacement": "[PERSON_NAME]"
         },
         "ADDRESS": {
             "enabled": true,
             "detection_method": "ner",
             "confidence_threshold": 0.75,
             "masking_style": "full",
-            "replacement": "[ADDRESS REDACTED]"
+            "replacement": "[ADDRESS]"
         },
         "ORGANIZATION": {
             "enabled": true,
             "detection_method": "ner",
             "confidence_threshold": 0.80,
             "masking_style": "full",
-            "replacement": "[ORG REDACTED]"
+            "replacement": "[ORGANIZATION]"
         },
         "DATE_OF_BIRTH": {
             "enabled": false,
