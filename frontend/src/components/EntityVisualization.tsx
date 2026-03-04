@@ -30,17 +30,19 @@ const getEntityIcon = (type: string) => {
 
 const getEntityColor = (type: string) => {
     const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-        EMAIL: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' },
-        CREDIT_CARD: { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-400', border: 'border-red-200 dark:border-red-800' },
-        SSN: { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-700 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-800' },
-        PHONE: { bg: 'bg-cyan-50 dark:bg-cyan-900/20', text: 'text-cyan-700 dark:text-cyan-400', border: 'border-cyan-200 dark:border-cyan-800' },
-        PERSON: { bg: 'bg-green-50 dark:bg-emerald-900/20', text: 'text-green-700 dark:text-emerald-400', border: 'border-green-200 dark:border-emerald-800' },
+        EMAIL: { bg: 'bg-brand-violet-600/10 dark:bg-brand-violet-950/40', text: 'text-brand-violet-600 dark:text-brand-violet-400', border: 'border-brand-violet-600/20 dark:border-brand-violet-600/30' },
+        CREDIT_CARD: { bg: 'bg-rose-50 dark:bg-rose-900/20', text: 'text-rose-700 dark:text-rose-400', border: 'border-rose-200 dark:border-rose-800' },
+        SSN: { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-400', border: 'border-indigo-200 dark:border-indigo-800' },
+        PHONE: { bg: 'bg-brand-violet-600/5 dark:bg-brand-obsidian-light/30', text: 'text-brand-violet-600 dark:text-brand-violet-400', border: 'border-brand-violet-600/20 dark:border-white/5' },
+        PERSON: { bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-700 dark:text-violet-400', border: 'border-violet-200 dark:border-violet-800' },
         LOCATION: { bg: 'bg-slate-50 dark:bg-slate-800/50', text: 'text-slate-700 dark:text-slate-300', border: 'border-slate-200 dark:border-slate-700' },
         DATE: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800' },
-        IP_ADDRESS: { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-700 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800' },
+        IP_ADDRESS: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' },
     };
     return colorMap[type] || { bg: 'bg-slate-50 dark:bg-slate-800/50', text: 'text-slate-700 dark:text-slate-300', border: 'border-slate-200 dark:border-slate-700' };
 };
+
+
 
 const getConfidenceLabel = (confidence: number) => {
     if (confidence >= 0.9) return { label: 'High', color: 'text-green-600 dark:text-emerald-400' };
@@ -57,13 +59,15 @@ export default function EntityVisualization({ entities, entityCountSummary }: En
     const uniqueTypes = Object.keys(entityCounts);
 
     return (
-        <div className="bg-white dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm p-6">
-            <div className="mb-6">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Detected Entities</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                    AI-identified sensitive information with confidence scoring
+        <div className="bg-white dark:bg-brand-obsidian-light/30 border border-slate-100 dark:border-white/5 rounded-3xl shadow-2xl p-8 group">
+
+            <div className="mb-8">
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Intelligence Report</h3>
+                <p className="text-sm font-bold text-slate-500 dark:text-brand-violet-400/60 uppercase tracking-widest">
+                    Machine Learning entity extraction with high-fidelity validation
                 </p>
             </div>
+
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 {uniqueTypes.map((type) => {
@@ -71,16 +75,19 @@ export default function EntityVisualization({ entities, entityCountSummary }: En
                     return (
                         <div
                             key={type}
-                            className={`${colors.bg} border ${colors.border} rounded-lg p-4`}
+                            className={`${colors.bg} border ${colors.border} rounded-2xl p-5 shadow-inner transition-transform hover:scale-105 active:scale-95 cursor-default`}
                         >
-                            <div className={`flex items-center gap-2 mb-2 ${colors.text}`}>
-                                {getEntityIcon(type)}
-                                <span className="text-xs font-semibold uppercase tracking-wide">{type}</span>
+                            <div className={`flex items-center gap-3 mb-3 ${colors.text}`}>
+                                <div className="p-2 bg-white/10 rounded-lg">
+                                    {getEntityIcon(type)}
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em]">{type}</span>
                             </div>
-                            <div className="text-2xl font-bold text-slate-900 dark:text-white">{entityCounts[type]}</div>
+                            <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{entityCounts[type]}</div>
                         </div>
                     );
                 })}
+
             </div>
 
             <div className="space-y-3">

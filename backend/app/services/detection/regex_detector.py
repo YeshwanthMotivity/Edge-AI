@@ -24,6 +24,17 @@ logger = structlog.get_logger(__name__)
 
 # ── Regex Patterns ──
 
+# Unicode blocks for Latin-based characters
+U_LC = r"a-z\u00DF-\u00FF\u0101-\u017F\u1E00-\u1EFF"
+U_UC = r"A-Z\u00C0-\u00DE\u0100-\u017E\u1E00-\u1E9F"
+U_ALL = U_LC + U_UC
+
+# Capitalized name part (e.g., "John", "O'Connor", "Jean-Luc")
+NAME_PART = rf"[{U_UC}][{U_LC}]*(?:['\-][{U_UC}][{U_LC}]*)*"
+
+# Common document headers to exclude from ALL CAPS matching
+EXCLUDE_HEADERS = r"SUMMARY|EXPERIENCE|EDUCATION|PROJECTS|SKILLS|ACHIEVEMENTS|ACTIVITIES|LANGUAGES|OBJECTIVE|CERTIFICATIONS|INTERESTS|PROFILE|PROFESSIONAL|ASSOCIATE|TECHNICAL|AIVA|DOCUSENSE|TALENTFLOW|SAFELENS|CODEZEN|TALENT|FLOW|SAFE|LENS|DOCU|SENSE|CODE|ZEN|DEVOPS|GITHUB|LINKEDIN|DATA|SCIENTIST|SCIENCE|ENGINEER|ENGINEERING|INTERN|RESEARCHER|ANALYST|DEVELOPER|ARCHITECT|CONSULTANT|UNIVERSITY|COLLEGE|INSTITUTE|SCHOOL|FOUNDATION|CERTIFICATION|LOAN|AGREEMENT|BORROWER|LENDER|APPLICANT|DETAILS|GENDER|FORMAT|RELATIONSHIP|EMPLOYER|EMPLOYEE|CONFIRMATION|SIGNATURE|DECLARATION|BETWEEN|MADE"
+
 PATTERNS = {
     EntityType.GOVERNMENT_ID: re.compile(
         # Aadhaar: XXXX XXXX XXXX or PAN: AAAAA1234A
@@ -34,7 +45,7 @@ PATTERNS = {
     ),
     EntityType.PHONE: re.compile(
         # Refined phone regex: strictly requires at least 10 digits and avoids 12-digit Aadhaar
-        r"(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}\b"
+        r"(?ix)(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}\b"
     ),
     EntityType.CREDIT_CARD: re.compile(
         # Supports partially masked cards with X or *
@@ -57,17 +68,12 @@ PATTERNS = {
         r"\b\d{1,5}\s+[a-zA-Z0-9.\s]+(?:St|Street|Ave|Avenue|Rd|Road|Blvd|Boulevard|Ln|Lane|Dr|Drive|Ct|Court|Way|Cir|Circle)[,\s]+[a-zA-Z\s]+[,\s]+[A-Z]{2}\s+\d{5}(?:-\d{4})?\b)"
     ),
     EntityType.PERSON_NAME: re.compile(
-        r"(?i:\b(?:mr\.|mrs\.|ms\.|dr\.|shri|smt\.?|prof\.?)\s+[a-z]+(?:\s+[a-z]+){0,3}\b)|"
-        r"\b(?:[A-Z][a-z]+\s+){1,3}[A-Z][a-z]+\b|"
-        # Lowercase Name Support: mudimala yeshwanth goud (3-4 words)
-        r"\b(?:[a-z]{3,}\s+){2,3}[a-z]{3,}\b|"
-        # CamelCase: MudimalaYeshwanthGoud
-        r"\b[A-Z][a-z]+(?:[A-Z][a-z]+){2,}\b|"
-        r"\b(?:[a-z]{3,}_){1,3}[a-z]{3,}\b|"
-        # Improved ALL CAPS matcher: excludes common document headers
-        r"\b(?!(?:.*?\b(?:SUMMARY|EXPERIENCE|EDUCATION|PROJECTS|SKILLS|ACHIEVEMENTS|ACTIVITIES|LANGUAGES|OBJECTIVE|CERTIFICATIONS|INTERESTS|PROFILE|PROFESSIONAL|ASSOCIATE|TECHNICAL|AIVA|DOCUSENSE|TALENTFLOW|SAFELENS|CODEZEN|TALENT|FLOW|SAFE|LENS|DOCU|SENSE|CODE|ZEN|DEVOPS|GITHUB|LINKEDIN|DATA|SCIENTIST|SCIENCE|ENGINEER|ENGINEERING|INTERN|RESEARCHER|ANALYST|DEVELOPER|ARCHITECT|CONSULTANT|UNIVERSITY|COLLEGE|INSTITUTE|SCHOOL|FOUNDATION|CERTIFICATION|LOAN|AGREEMENT|BORROWER|LENDER|APPLICANT|DETAILS|GENDER|FORMAT|RELATIONSHIP|EMPLOYER|EMPLOYEE|CONFIRMATION|SIGNATURE|DECLARATION|BETWEEN|MADE)\b))(?:[A-Z]{3,}\s+){1,3}[A-Z]{3,}\b|"
-        r"\b(?:[A-Z]\.?\s*){1,2}[A-Z][a-z]+\s+[A-Z][a-z]+\b|"
-        r"\b[A-Z][a-z]+\s+(?:[A-Z][a-z]+\s+)?[A-Z]\.?\b"
+        rf"(?i:\b(?:Mr|Mrs|Ms|Dr|Shri|Smt|Prof)\.?\s+{NAME_PART}(?:\s+{NAME_PART})*\b(?![-\']))|"
+        rf"\b{NAME_PART}\s+[{U_UC}]\.?(?![-\'\w])|"
+        rf"\b(?:[{U_UC}]\.?\s+)+{NAME_PART}\b(?![-\'])|"
+        rf"\b{NAME_PART}\s+{NAME_PART}(?:\s+{NAME_PART})*\b(?![-\'])|"
+        rf"\b(?!(?:.*?\b(?:{EXCLUDE_HEADERS})\b))(?:[{U_UC}]{{3,}}\s+){{1,3}}[{U_UC}]{{3,}}\b|"
+        rf"\b(?:[{U_LC}]{{3,}}\s+){{2,3}}[{U_LC}]{{3,}}\b"
     ),
 }
 
@@ -134,6 +140,16 @@ class RegexDetector(BaseDetector):
 
                 # Filter against PII Blacklist for Names and Organizations
                 if entity_type in [EntityType.PERSON_NAME, EntityType.ORGANIZATION]:
+                    # Layered Check: Sentence Start Check
+                    # If the match is at the start of a sentence and is a common word, skip it.
+                    if match.start() > 2:
+                        pre_context = content.text[max(0, match.start()-2):match.start()]
+                        if pre_context.endswith(". ") or pre_context.endswith("\n"):
+                            # Check if the first word of the match is a common blacklisted term
+                            first_word = value.split()[0].upper().rstrip(".,")
+                            if first_word in PII_BLACKLIST:
+                                continue
+
                     # Check whole phrase
                     upper_val = value.upper().strip().rstrip(":")
                     if upper_val in PII_BLACKLIST:

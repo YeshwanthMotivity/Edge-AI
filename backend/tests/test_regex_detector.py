@@ -20,6 +20,7 @@ def default_policy():
             "PHONE": EntityRule(enabled=True, detection_method="regex", confidence_threshold=0.85),
             "SSN": EntityRule(enabled=True, detection_method="regex", confidence_threshold=0.85),
             "CREDIT_CARD": EntityRule(enabled=True, detection_method="regex_luhn", confidence_threshold=0.85),
+            "PERSON_NAME": EntityRule(enabled=True, detection_method="regex", confidence_threshold=0.85),
         }
     )
 
@@ -103,6 +104,79 @@ def test_allowlist_filtering(detector, default_policy):
     
     assert len(entities) == 1
     assert entities[0].value == "admin@example.com"
+
+
+def test_detect_person_name(detector, default_policy):
+    test_cases = [
+        "John Doe",
+        "J. Doe",
+        "John D.",
+        "Brian O'Connor",
+        "Jean-Luc Picard",
+        "Dr. Smith",
+        "Mr. John Doe",
+        "María González",
+        "Nguyễn Văn A",
+        "mudimala yeshwanth goud",
+        "JOHN DOE"
+    ]
+    
+    for name in test_cases:
+        content = ExtractedContent(
+            document_id="doc1",
+            text=f"The person is {name}.",
+            page_count=1,
+            extraction_method="pdf",
+            has_embedded_text=True
+        )
+        entities = detector.detect(content, default_policy)
+        
+        # Filter for PERSON_NAME
+        name_entities = [e for e in entities if e.entity_type == EntityType.PERSON_NAME]
+        assert len(name_entities) >= 1, f"Failed to detect: {name}"
+        assert name_entities[0].value.strip() == name
+
+
+def test_person_name_filtering(detector, default_policy):
+    # Negative cases that should NOT be detected as names
+    negative_cases = [
+        "SUMMARY",
+        "EXPERIENCE",
+        "Monday",
+        "January",
+        "Engineer",
+        "Education",
+        "Skills"
+    ]
+    
+    for noise in negative_cases:
+        content = ExtractedContent(
+            document_id="doc1",
+            text=f"Section: {noise}\nDetails here.",
+            page_count=1,
+            extraction_method="pdf",
+            has_embedded_text=True
+        )
+        entities = detector.detect(content, default_policy)
+        name_entities = [e for e in entities if e.entity_type == EntityType.PERSON_NAME]
+        assert len(name_entities) == 0, f"Incorrectly detected noise: {noise}"
+
+
+def test_sentence_start_filtering(detector, default_policy):
+    # "The" or "Monday" at sentence start should skip if in blacklist
+    content = ExtractedContent(
+        document_id="doc1",
+        text="Monday is a busy day. John Doe is here.",
+        page_count=1,
+        extraction_method="pdf",
+        has_embedded_text=True
+    )
+    entities = detector.detect(content, default_policy)
+    name_entities = [e for e in entities if e.entity_type == EntityType.PERSON_NAME]
+    
+    # Should find John Doe but NOT Monday
+    assert len(name_entities) == 1
+    assert name_entities[0].value == "John Doe"
 
 
 def test_empty_content(detector, default_policy):

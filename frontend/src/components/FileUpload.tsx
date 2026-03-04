@@ -59,30 +59,32 @@ export default function FileUpload({ onFileSelect, selectedFile, onClear }: File
 
     if (selectedFile) {
         return (
-            <div className="bg-white dark:bg-slate-900/50 rounded-lg border-2 border-green-200 dark:border-emerald-800/50 p-6">
+            <div className="bg-white dark:bg-brand-obsidian-light/30 rounded-3xl border-2 border-emerald-200 dark:border-emerald-500/20 p-8 shadow-2xl transition-all">
                 <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-green-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <CheckCircle className="w-6 h-6 text-green-600 dark:text-emerald-500" />
+                    <div className="flex items-start gap-6">
+                        <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-inner">
+                            <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-500" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">File Selected</h3>
-                            <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{selectedFile.name}</p>
-                            <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-1 tracking-tight">Source Ready</h3>
+                            <p className="text-base text-slate-600 dark:text-brand-violet-400 font-bold italic">{selectedFile.name}</p>
+                            <div className="flex items-center gap-4 text-xs font-black uppercase tracking-widest text-slate-500 dark:text-brand-violet-400/60 mt-2">
                                 <span>{formatFileSize(selectedFile.size)}</span>
-                                <span>{selectedFile.type || 'Unknown type'}</span>
+                                <span className="w-1 h-1 bg-slate-300 dark:bg-brand-violet-600 rounded-full"></span>
+                                <span>{selectedFile.type || 'Binary Data'}</span>
                             </div>
                         </div>
                     </div>
                     <button
                         onClick={onClear}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        className="p-3 bg-slate-100 dark:bg-brand-violet-950/40 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-xl transition-all group border border-transparent dark:border-brand-violet-600/20"
                         title="Remove file"
                     >
-                        <X className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                        <X className="w-5 h-5 text-slate-500 dark:text-brand-violet-400 group-hover:text-red-500" />
                     </button>
                 </div>
             </div>
+
         );
     }
 
@@ -93,34 +95,35 @@ export default function FileUpload({ onFileSelect, selectedFile, onClear }: File
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             className={`
-        border-2 border-dashed rounded-lg p-12 text-center transition-all cursor-pointer
+        border-2 border-dashed rounded-4xl p-16 text-center transition-all cursor-pointer group
         ${isDragging
-                    ? 'border-blue-500 bg-blue-50 dark:border-indigo-500 dark:bg-indigo-500/10'
-                    : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/30 hover:border-blue-400 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-900/50'
+                    ? 'border-brand-violet-600 bg-brand-violet-600/5 shadow-[0_0_30px_rgba(107,70,255,0.1)]'
+                    : 'border-slate-300 dark:border-white/10 bg-white dark:bg-brand-obsidian-light/20 hover:border-brand-violet-600/50 dark:hover:border-brand-violet-600/40 hover:bg-slate-50 dark:hover:bg-brand-obsidian-light/30'
                 }
       `}
             onClick={() => fileInputRef.current?.click()}
         >
             <div className="max-w-md mx-auto">
                 <div className={`
-          w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-colors
-          ${isDragging ? 'bg-blue-100 dark:bg-indigo-900/50' : 'bg-slate-100 dark:bg-slate-800'}
+          w-20 h-20 mx-auto mb-6 rounded-3xl flex items-center justify-center transition-all duration-500 shadow-inner group-hover:scale-110 group-hover:rotate-3
+          ${isDragging ? 'bg-brand-violet-600 text-white shadow-brand-violet-600/40 rotate-12' : 'bg-slate-100 dark:bg-brand-violet-950/40 text-slate-400 dark:text-brand-violet-400/60'}
         `}>
-                    <Upload className={`w-8 h-8 ${isDragging ? 'text-blue-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`} />
+                    <Upload className={`w-10 h-10 ${isDragging ? 'text-white' : ''}`} />
                 </div>
 
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    {isDragging ? 'Drop your file here' : 'Upload Document'}
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">
+                    {isDragging ? 'Ready for Capture' : 'Secure Document Ingest'}
                 </h3>
 
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                    Drag and drop your file here, or click to browse
+                <p className="text-base text-slate-600 dark:text-slate-400 mb-6 font-medium">
+                    Drag and drop your file here, or <span className="text-brand-violet-600 dark:text-brand-violet-400 font-bold underline decoration-brand-violet-600/30">browse securely</span>
                 </p>
 
-                <div className="flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-500">
+                <div className="flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-brand-violet-400/40">
                     <File className="w-4 h-4" />
-                    <span>Supported formats: PDF, TXT</span>
+                    <span>Compliant with PDF & Plaintext</span>
                 </div>
+
 
                 <input
                     ref={fileInputRef}
