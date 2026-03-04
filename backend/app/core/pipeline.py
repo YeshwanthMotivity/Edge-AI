@@ -11,6 +11,7 @@ This makes audit logs legally defensible:
   - Signature log  = legal verification record (post-signing)
 """
 
+import re
 import uuid
 import time
 from pathlib import Path

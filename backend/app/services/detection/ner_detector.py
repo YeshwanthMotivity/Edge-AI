@@ -14,6 +14,7 @@ Features:
     - Subword offset_mapping for accurate character-level spans
 """
 
+import re
 import time
 import hashlib
 import signal
