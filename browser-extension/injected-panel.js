@@ -32,7 +32,7 @@ authToggleBtn.addEventListener('click', (e) => {
         authToggleText.innerText = 'Already have an account?';
         authToggleBtn.innerText = 'Sign In';
     } else {
-        authTitle.innerText = 'Corporate Sign-In';
+        authTitle.innerText = 'Sign In';
         authBtn.innerText = 'Authenticate';
         authToggleText.innerText = 'Need an account?';
         authToggleBtn.innerText = 'Register';
@@ -127,11 +127,30 @@ function showAuthError(msg) {
     authErrorMsg.style.display = 'block';
 }
 
-logoutBtn.addEventListener('click', () => {
-    chrome.storage.local.remove(['edgePolicyUser', 'edgePolicyToken'], () => {
-        checkAuth();
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    chrome.storage.local.remove(['edgePolicyToken', 'edgePolicyUser'], () => {
+        document.getElementById('mainView').classList.remove('active');
+        document.getElementById('loginView').classList.add('active');
+        document.getElementById('logoutBtn').style.display = 'none';
+        document.getElementById('userFooterLabel').textContent = 'Unauthenticated';
+        clearFileInput();
     });
 });
+
+function clearFileInput() {
+    const fileInput = document.getElementById('fileInput');
+    const sanitizeBtn = document.getElementById('sanitizeBtn');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const resultDiv = document.getElementById('sanitizeResult');
+
+    if (fileInput) fileInput.value = '';
+    if (fileNameDisplay) {
+        fileNameDisplay.innerText = 'Select Document to Sanitize';
+        fileNameDisplay.style.color = 'var(--text-muted)';
+    }
+    if (sanitizeBtn) sanitizeBtn.style.display = 'none';
+    if (resultDiv) resultDiv.style.display = 'none';
+}
 
 checkAuth(); // Initial Check
 
@@ -153,39 +172,70 @@ function updateUI() {
         // Only show logs if authenticated
         if (!result.edgePolicyUser) return;
 
-        const logs = result.blockLogs || [];
+        const allLogs = result.blockLogs || [];
+        const logs = allLogs.filter(log => log.user === result.edgePolicyUser);
         const container = document.getElementById('logList');
 
         let blocked = 0;
         let allowed = 0;
 
+        container.innerHTML = '';
         if (logs.length > 0) {
-            container.innerHTML = '';
-            // For now, show all logs regardless of user, or filter by user?
-            // User requested "user activities", let's show all logs but highlight the user
+            // Group by filename to create process timelines
+            const groupedLogs = {};
             logs.forEach(log => {
                 if (log.status === 'BLOCKED') blocked++;
                 else allowed++;
 
-                const item = document.createElement('div');
-                item.className = `log-item ${log.status}`;
+                if (!groupedLogs[log.filename]) {
+                    groupedLogs[log.filename] = [];
+                }
+                groupedLogs[log.filename].push(log);
+            });
 
-                const date = new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const site = log.url ? log.url.split('/')[2].replace('www.', '') : 'Unknown';
-                const logUser = log.user || 'Unknown User';
+            // Sort by latest activity first
+            const sortedFilenames = Object.keys(groupedLogs).sort((a, b) => {
+                const latestA = groupedLogs[a][groupedLogs[a].length - 1].timestamp;
+                const latestB = groupedLogs[b][groupedLogs[b].length - 1].timestamp;
+                return latestB - latestA;
+            });
+
+            sortedFilenames.forEach(filename => {
+                const fileLogs = groupedLogs[filename];
+                const latestLog = fileLogs[fileLogs.length - 1];
+                const isAuthorized = fileLogs.some(l => l.status === 'AUTHORIZED');
+                const latestStatus = isAuthorized ? 'AUTHORIZED' : 'BLOCKED';
+
+                const item = document.createElement('div');
+                item.className = `log-item ${latestStatus}`;
+
+                const site = latestLog.url ? (latestLog.url.includes('/') ? latestLog.url.split('/')[2].replace('www.', '') : latestLog.url) : 'Extension UI';
+
+                let timelineHTML = '';
+                fileLogs.forEach((l, index) => {
+                    const lDate = new Date(l.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    const lAction = l.status === 'BLOCKED' ? 'Intercepted (Blocked)' : 'Sanitized (Authorized)';
+                    const color = l.status === 'BLOCKED' ? 'var(--danger)' : 'var(--success)';
+                    timelineHTML += `<div style="margin-top: 6px; padding-left: 10px; border-left: 2px solid rgba(148,163,184,0.2); position: relative;">
+                        <span style="position: absolute; left: -5px; top: 4px; width: 6px; height: 6px; background: ${color}; border-radius: 50%;"></span>
+                        <span style="color: ${color}; font-weight: bold; font-size: 10px;">${lDate}</span> - <span style="font-size: 11px;">${lAction}</span>
+                    </div>`;
+                });
 
                 item.innerHTML = `
                     <div class="log-meta">
-                        <span>${date} • ${site} • <span style="color:var(--primary)">${logUser}</span></span>
-                        <span class="status-badge">${log.status}</span>
+                        <span>Source: ${site}</span>
+                        <span class="status-badge">${latestStatus}</span>
                     </div>
-                    <span class="log-filename">${log.filename}</span>
-                    <div class="log-info">
-                        <span>Action: ${log.status === 'BLOCKED' ? 'Intercepted' : 'Sanitized'}</span>
+                    <span class="log-filename" style="margin-bottom: 8px;">${filename}</span>
+                    <div class="log-info" style="flex-direction: column; align-items: flex-start;">
+                        ${timelineHTML}
                     </div>
                 `;
                 container.appendChild(item);
             });
+        } else {
+            container.innerHTML = '<div class="no-logs">Monitoring active. Awaiting activity...</div>';
         }
 
         document.getElementById('blockedCount').innerText = blocked;
@@ -193,7 +243,7 @@ function updateUI() {
     });
 }
 
-// Live update if storage changes
+// Listen to storage changes to auto-update logs when background script intercepts
 chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'local' && changes.blockLogs) {
         updateUI();
@@ -271,7 +321,7 @@ sanitizeBtn.addEventListener('click', async () => {
     formData.append('policy', 'default_policy');
 
     try {
-        const response = await fetch('http://127.0.0.1:8000/api/v1/mask', {
+        const response = await fetch('http://127.0.0.1:8000/api/v1/process', {
             method: 'POST',
             body: formData
         });
@@ -287,9 +337,20 @@ sanitizeBtn.addEventListener('click', async () => {
 
         const result = await response.json();
 
-        const downloadUrl = `http://127.0.0.1:8000/api/v1/documents/${result.document_id}/download?type=sanitized`;
+        const preferredType = result.signed_path ? 'signed' : 'sanitized';
+        const downloadUrl = `http://127.0.0.1:8000/api/v1/documents/${result.document_id}/download?type=${preferredType}`;
 
         showResult(`Sanitization complete. Neutralized ${result.entities_redacted} risks. Downloading...`, 'success');
+
+        // Log the authorized action so metrics increment
+        chrome.runtime.sendMessage({
+            action: 'LOG_ALLOWED',
+            details: {
+                filename: selectedFile.name,
+                url: 'Extension UI',
+                reason: 'Sanitized'
+            }
+        });
 
         // Let the background script download it, since chrome.downloads works broadly in background
         chrome.runtime.sendMessage({
@@ -303,5 +364,7 @@ sanitizeBtn.addEventListener('click', async () => {
     } finally {
         sanitizeBtn.disabled = false;
         sanitizeBtn.innerText = 'Sanitize & Download';
+        // Allow selecting the same file again if needed
+        fileInput.value = '';
     }
 });

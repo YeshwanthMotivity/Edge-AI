@@ -1,8 +1,14 @@
 {
     "manifest_version": 3,
-    "name": "Edge Policy AI Extension",
+    "name": "EdgeAI Policy",
     "version": "1.0.0",
     "description": "Real-time, on-device policy enforcement and PII redaction.",
+    "icons": {
+        "16": "public/icon128.png",
+        "32": "public/icon128.png",
+        "48": "public/icon128.png",
+        "128": "public/icon128.png"
+    },
     "permissions": [
         "activeTab",
         "storage",
@@ -31,7 +37,7 @@
     ],
     "action": {
         "default_popup": "popup.html",
-        "default_title": "Edge Policy AI Protection"
+        "default_title": "EdgeAI Policy Protection"
     },
     "web_accessible_resources": [
         {

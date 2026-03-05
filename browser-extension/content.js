@@ -1,5 +1,5 @@
-// Edge Policy AI - Content Script
-console.log("%cEdge Policy AI protection active", "color: #c084fc; font-weight: bold; font-size: 14px", "on:", window.location.href);
+// EdgeAI Policy - Content Script
+console.log("%cEdgeAI Policy protection active", "color: #c084fc; font-weight: bold; font-size: 14px", "on:", window.location.href);
 
 /**
  * Custom UI - Injected Dialog
@@ -35,7 +35,6 @@ function showSecurityAlert(filename, reason, entities) {
         <div style="background: #1e293b; border: 1px solid rgba(192, 132, 252, 0.3); border-radius: 16px; padding: 32px; width: 420px; box-shadow: 0 0 40px rgba(168, 85, 247, 0.15), 0 20px 25px -5px rgba(0, 0, 0, 0.1); position: relative; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; text-align: left;">
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, #8b5cf6, #d946ef);"></div>
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-                <div style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">⚠️</div>
                 <div style="font-size: 20px; font-weight: 700; color: #f8fafc; letter-spacing: -0.02em; margin:0;">Security Policy Alert</div>
             </div>
             <div style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
@@ -74,7 +73,7 @@ async function verifyFileSecurity(file) {
     const isSupported = allowedTypes.some(ext => file.name.toLowerCase().endsWith(ext));
     if (!isSupported) return { authorized: true };
 
-    console.log("Edge Policy AI: Verification in progress for:", file.name);
+    console.log("EdgeAI Policy: Verification in progress for:", file.name);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -129,7 +128,7 @@ const handleUploadEvent = async (event) => {
         target.value = '';
     }
 
-    console.log(`Edge Policy AI: Intercepted ${event.type} attempt. Verifying security...`);
+    console.log(`EdgeAI Policy: Intercepted ${event.type} attempt. Verifying security...`);
 
     for (const file of files) {
         const result = await verifyFileSecurity(file);
@@ -211,7 +210,7 @@ function injectEdgePolicyPanel() {
         user-select: none !important;
     `;
     fab.innerHTML = '🛡️';
-    fab.title = "Edge Policy AI";
+    fab.title = "EdgeAI Policy";
 
     fab.addEventListener('mouseenter', () => fab.style.transform = 'scale(1.1)');
     fab.addEventListener('mouseleave', () => fab.style.transform = 'scale(1)');

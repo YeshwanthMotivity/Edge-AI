@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from app.core.security import create_access_token, verify_password, hash_password
 from app.core.rate_limiter import limiter
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
 
 from sqlalchemy.orm import Session

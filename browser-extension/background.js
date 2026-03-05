@@ -1,5 +1,5 @@
-// Edge Policy AI - Background Service Worker
-console.log("Edge Policy AI background worker active.");
+// EdgeAI Policy - Background Service Worker
+console.log("EdgeAI Policy background worker active.");
 
 // Handle events from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

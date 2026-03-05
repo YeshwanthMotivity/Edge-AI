@@ -68,6 +68,20 @@
             "masking_style": "full",
             "replacement": "[LINKEDIN]"
         },
+        "ACCOUNT_NAME": {
+            "enabled": true,
+            "detection_method": "regex",
+            "confidence_threshold": 0.85,
+            "masking_style": "full",
+            "replacement": "[ACCOUNT_NAME]"
+        },
+        "IFS_CODE": {
+            "enabled": true,
+            "detection_method": "regex",
+            "confidence_threshold": 0.90,
+            "masking_style": "full",
+            "replacement": "[IFS_CODE]"
+        },
         "URL": {
             "enabled": true,
             "detection_method": "regex",

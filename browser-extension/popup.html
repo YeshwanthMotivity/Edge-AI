@@ -3,27 +3,24 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Edge Policy AI</title>
+    <title>EdgeAI Policy</title>
     <style>
         :root {
             --bg-deep: #0f172a;
             --bg-card: #1e293b;
             --primary: #c084fc;
-            --primary-glow: rgba(168, 85, 247, 0.4);
             --text: #f8fafc;
             --text-muted: #94a3b8;
-            --danger: #ef4444;
-            --success: #34d399;
         }
 
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             padding: 0;
-            width: 400px;
+            width: 320px;
             background-color: var(--bg-deep);
             color: var(--text);
             margin: 0;
-            overflow-x: hidden;
+            text-align: center;
         }
 
         .header {
@@ -38,272 +35,30 @@
             font-size: 18px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            letter-spacing: -0.01em;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .subtitle {
-            font-size: 11px;
+        .content {
+            padding: 25px 20px;
+            font-size: 13px;
+            line-height: 1.6;
             color: var(--text-muted);
-            margin: 4px 0 0 0;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
 
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        .shield-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
         }
 
-        .tab-btn {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 12px 0;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s;
-            border-bottom: 2px solid transparent;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .tab-btn:hover {
-            color: var(--text);
-        }
-
-        .tab-btn.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-
-        .tab-content {
-            display: none;
-            padding: 20px;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+        .description {
             margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid rgba(148, 163, 184, 0.05);
-        }
-
-        .stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            display: block;
-        }
-
-        .stat-label {
-            font-size: 10px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        /* Log List */
-        .log-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .log-header h4 {
-            font-size: 12px;
-            margin: 0;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .log-list {
-            max-height: 250px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .log-item {
-            background: var(--bg-card);
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(148, 163, 184, 0.05);
-            transition: all 0.2s;
-        }
-
-        .log-item.BLOCKED {
-            border-left: 4px solid var(--danger);
-        }
-
-        .log-item.AUTHORIZED {
-            border-left: 4px solid var(--success);
-        }
-
-        .log-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-
-        .log-filename {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            display: block;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .log-info {
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .status-badge {
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 9px;
-            font-weight: 800;
-        }
-
-        .BLOCKED .status-badge {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-        }
-
-        .AUTHORIZED .status-badge {
-            background: rgba(52, 211, 153, 0.1);
-            color: var(--success);
-        }
-
-        .no-logs {
-            text-align: center;
-            padding: 40px 0;
-            color: var(--text-muted);
-            font-size: 12px;
-        }
-
-        /* Scrollbar */
-        .log-list::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .log-list::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 2px;
-        }
-
-        /* Sanitize Tab */
-        .upload-area {
-            border: 2px dashed rgba(148, 163, 184, 0.4);
-            border-radius: 12px;
-            padding: 30px 20px;
-            text-align: center;
-            transition: all 0.2s;
-            cursor: pointer;
-            background: rgba(30, 41, 59, 0.3);
-        }
-
-        .upload-area:hover,
-        .upload-area.dragover {
-            border-color: var(--primary);
-            background: rgba(168, 85, 247, 0.05);
-        }
-
-        .upload-icon {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: var(--primary);
-        }
-
-        .upload-text {
-            font-size: 13px;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-
-        .upload-subtext {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .action-btn {
-            display: none;
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            margin-top: 15px;
-            transition: all 0.2s;
-        }
-
-        .action-btn:hover {
-            background: #a855f7;
-            box-shadow: 0 0 15px var(--primary-glow);
-        }
-
-        .action-btn:disabled {
-            background: #475569;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        #sanitizeResult {
-            margin-top: 15px;
-            font-size: 12px;
-            text-align: center;
-            padding: 10px;
-            border-radius: 8px;
-            display: none;
-        }
-
-        #sanitizeResult.success {
-            background: rgba(52, 211, 153, 0.1);
-            color: var(--success);
-            border: 1px solid rgba(52, 211, 153, 0.2);
-        }
-
-        #sanitizeResult.error {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
         .footer {
             padding: 12px 20px;
             font-size: 10px;
             color: var(--text-muted);
-            text-align: center;
             border-top: 1px solid rgba(148, 163, 184, 0.1);
             background: var(--bg-deep);
         }
@@ -312,54 +67,19 @@
 
 <body>
     <div class="header">
-        <h3>🛡️ EDGE POLICY AI</h3>
-        <p class="subtitle">Real-time Privacy Protection</p>
+        <h3>🛡️ EDGEAI POLICY</h3>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" data-target="feed-tab">Logs</button>
-        <button class="tab-btn" data-target="sanitize-tab">Process Document</button>
-    </div>
-
-    <!-- Activity logs Tab -->
-    <div id="feed-tab" class="tab-content active">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <span class="stat-value" id="blockedCount">0</span>
-                <span class="stat-label">Blocked</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-value" id="allowedCount">0</span>
-                <span class="stat-label">Authorized</span>
-            </div>
+    <div class="content">
+        <div class="shield-icon">🛡️</div>
+        <div class="description">
+            <strong style="color: var(--text); font-size: 14px; display: block; margin-bottom: 8px;">Real-Time Privacy
+                Protection</strong>
+            EdgeAI Policy automatically intercepts and sanitizes sensitive documents containing PII when uploading them
+            to web portals.
+            <br><br>
+            A secure corporate widget will appear on supported pages to manage your documents and view activity logs.
         </div>
-
-        <div class="log-header">
-            <h4>Recent Activity</h4>
-        </div>
-        <div id="logList" class="log-list">
-            <div class="no-logs">Monitoring active. Awaiting activity...</div>
-        </div>
-    </div>
-
-    <!-- Sanitize Document Tab -->
-    <div id="sanitize-tab" class="tab-content">
-        <div style="margin-bottom: 20px;">
-            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0;">
-                Securely redact sensitive Personal Identifiable Information (PII) before sharing. Processing happens
-                securely and documents are auto-downloaded.
-            </p>
-        </div>
-
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📄</div>
-            <div class="upload-text">Select Document to Sanitize</div>
-            <div class="upload-subtext" id="fileNameDisplay">Supports PDF, JPG, PNG</div>
-            <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tiff">
-        </div>
-
-        <button id="sanitizeBtn" class="action-btn">Sanitize & Download</button>
-        <div id="sanitizeResult"></div>
     </div>
 
     <div class="footer">

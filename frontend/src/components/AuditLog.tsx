@@ -44,7 +44,10 @@ export default function AuditLog() {
     });
 
     const formatDate = (timestamp: string) => {
-        return new Date(timestamp).toLocaleString('en-US', {
+        // Append 'Z' to treat the backend naive datetime as UTC, 
+        // which forces the browser to convert it to the user's local timezone
+        const dateStr = timestamp.endsWith('Z') ? timestamp : `${timestamp}Z`;
+        return new Date(dateStr).toLocaleString('en-US', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',

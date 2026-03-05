@@ -21,9 +21,11 @@ class EntityType(str, Enum):
     ORGANIZATION = "ORGANIZATION"
     DATE_OF_BIRTH = "DATE_OF_BIRTH"
     ACCOUNT_NUMBER = "ACCOUNT_NUMBER"
+    ACCOUNT_NAME = "ACCOUNT_NAME"
     GOVERNMENT_ID = "GOVERNMENT_ID"
     LINKEDIN = "LINKEDIN"
     URL = "URL"
+    IFS_CODE = "IFS_CODE"
 
 
 class DetectionMethod(str, Enum):
