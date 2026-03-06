@@ -150,6 +150,9 @@ function clearFileInput() {
     }
     if (sanitizeBtn) sanitizeBtn.style.display = 'none';
     if (resultDiv) resultDiv.style.display = 'none';
+
+    const dragContainer = document.getElementById('dragContainer');
+    if (dragContainer) dragContainer.style.display = 'none';
 }
 
 checkAuth(); // Initial Check
@@ -291,6 +294,9 @@ function handleFileSelection(file) {
     sanitizeBtn.style.display = 'block';
     resultDiv.style.display = 'none';
 
+    const dragContainer = document.getElementById('dragContainer');
+    if (dragContainer) dragContainer.style.display = 'none';
+
     // Allowed sizes & types check
     const allowedTypes = ['.pdf', '.png', '.jpg', '.jpeg', '.tiff'];
     const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
@@ -342,6 +348,10 @@ sanitizeBtn.addEventListener('click', async () => {
 
         showResult(`Sanitization complete. Neutralized ${result.entities_redacted} risks. Downloading...`, 'success');
 
+        if (!chrome.runtime || !chrome.runtime.sendMessage) {
+            throw new Error("Extension updated. Please refresh the web page to reconnect.");
+        }
+
         // Log the authorized action so metrics increment
         chrome.runtime.sendMessage({
             action: 'LOG_ALLOWED',
@@ -358,6 +368,29 @@ sanitizeBtn.addEventListener('click', async () => {
             details: { url: downloadUrl, filename: `Sanitized_${selectedFile.name}` }
         });
 
+        // Send the file to the parent window to render native auto-attach UI
+        try {
+            const fileRes = await fetch(downloadUrl);
+            const blob = await fileRes.blob();
+            const downloadFilename = `Sanitized_${selectedFile.name}`;
+
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = () => {
+                const dataUrl = reader.result;
+                // Tell the parent window the file is ready to be dragged natively
+                window.parent.postMessage({
+                    action: 'EDGE_POLICY_FILE_READY',
+                    payload: {
+                        filename: downloadFilename,
+                        dataUrl: dataUrl
+                    }
+                }, '*');
+            };
+        } catch (err) {
+            console.warn("Failed to prepare native drag file:", err);
+        }
+
     } catch (error) {
         console.error(error);
         showResult(error.message, 'error');
@@ -366,5 +399,32 @@ sanitizeBtn.addEventListener('click', async () => {
         sanitizeBtn.innerText = 'Sanitize & Download';
         // Allow selecting the same file again if needed
         fileInput.value = '';
+    }
+});
+
+// Auto-Populate Listener from Content Script Acknowledge Button
+window.addEventListener('message', async (event) => {
+    if (event.data && event.data.action === 'EDGE_POLICY_AUTO_POPULATE') {
+        const { filename, dataUrl } = event.data.payload;
+        try {
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            const populatedFile = new File([blob], filename, { type: blob.type || 'application/pdf' });
+
+            // Switch to process document tab manually
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const processBtn = document.querySelector('.tab-btn[data-target="sanitize-tab"]');
+            if (processBtn) processBtn.classList.add('active');
+
+            const processView = document.getElementById('sanitize-tab');
+            if (processView) processView.classList.add('active');
+
+            // Forward file to the standard dropzone handler
+            handleFileSelection(populatedFile);
+        } catch (err) {
+            console.error("Failed to auto-populate file:", err);
+        }
     }
 });

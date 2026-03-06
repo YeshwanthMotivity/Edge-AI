@@ -4,7 +4,8 @@ console.log("%cEdgeAI Policy protection active", "color: #c084fc; font-weight: b
 /**
  * Custom UI - Injected Dialog
  */
-function showSecurityAlert(filename, reason, entities) {
+function showSecurityAlert(file, reason, entities) {
+    const filename = file.name;
     const existing = document.getElementById('edge-policy-overlay');
     if (existing) existing.remove();
 
@@ -62,6 +63,30 @@ function showSecurityAlert(filename, reason, entities) {
     document.getElementById('ep-close-btn').onclick = () => {
         overlay.style.opacity = '0';
         setTimeout(() => overlay.remove(), 200);
+
+        // Auto-populate to Process Document tab
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = () => {
+            const dataUrl = reader.result;
+            const iframe = document.getElementById('edge-policy-iframe');
+            if (iframe && iframe.contentWindow) {
+                // Determine if panel is closed by checking opacity, click FAB to open if it is
+                if (iframe.style.opacity === '0' || iframe.style.opacity === '') {
+                    const fab = document.getElementById('edge-policy-fab');
+                    if (fab) fab.click();
+                }
+
+                // Send the file over postMessage to the injected panel
+                iframe.contentWindow.postMessage({
+                    action: 'EDGE_POLICY_AUTO_POPULATE',
+                    payload: {
+                        filename: filename,
+                        dataUrl: dataUrl
+                    }
+                }, '*');
+            }
+        };
     };
 }
 
@@ -99,6 +124,9 @@ async function verifyFileSecurity(file) {
 const handleUploadEvent = async (event) => {
     // Don't re-intercept our own re-injected events
     if (event._edgeCheckDone) return;
+
+    // Allow drops originating from our own panel to pass through naturally
+    if (window._isEdgePolicyPanelDrag) return;
 
     let files = [];
     let target = event.target;
@@ -147,7 +175,7 @@ const handleUploadEvent = async (event) => {
                 }
             });
 
-            showSecurityAlert(file.name, result.reason, result.detected_entities);
+            showSecurityAlert(file, result.reason, result.detected_entities);
             return;
         }
     }
@@ -261,10 +289,130 @@ function injectEdgePolicyPanel() {
 
     fab.addEventListener('click', togglePanel);
 
-    // 4. Listen for close message from the iframe
+
+    // 4. Listen for close message from the iframe or file ready
     window.addEventListener('message', (event) => {
         if (event.data && event.data.action === 'EDGE_POLICY_CLOSE_PANEL') {
             if (isOpen) togglePanel();
+        } else if (event.data && event.data.action === 'EDGE_POLICY_FILE_READY') {
+            const fileData = event.data.payload;
+            if (!fileData) return;
+
+            // Remove existing widget if any
+            let existingWidget = document.getElementById('edge-policy-drag-widget');
+            if (existingWidget) existingWidget.remove();
+
+            const widget = document.createElement('div');
+            widget.id = 'edge-policy-drag-widget';
+            widget.style.cssText = `
+                position: fixed !important;
+                bottom: 24px !important;
+                right: 90px !important;
+                background: #1e293b !important;
+                border: 1px solid rgba(52, 211, 153, 0.4) !important;
+                border-radius: 12px !important;
+                padding: 16px 20px !important;
+                min-height: 60px !important;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 0 1px rgba(52, 211, 153, 0.1) inset !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 16px !important;
+                z-index: 2147483647 !important;
+                font-family: 'Inter', system-ui, sans-serif !important;
+                line-height: 1.4 !important;
+                transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                user-select: none !important;
+                color-scheme: dark !important;
+            `;
+
+            widget.innerHTML = `
+                <div id="ep-widget-attach" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; cursor: pointer; flex-grow: 1; padding: 4px; border-radius: 8px; transition: background 0.2s;" title="Click to instantly attach to chat">
+                    <div style="font-size: 24px;">📄</div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span id="ep-widget-filename" style="font-size: 14px; font-weight: 600; color: #f8fafc; max-width: 180px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${fileData.filename}</span>
+                    </div>
+                </div>
+                <div id="ep-widget-close" style="margin-left: 8px; font-size: 14px; color: #94a3b8; cursor: pointer; padding: 8px; transition: color 0.2s;">✕</div>
+            `;
+
+            document.documentElement.appendChild(widget);
+
+            // Close button hover
+            const closeBtn = widget.querySelector('#ep-widget-close');
+            closeBtn.addEventListener('mouseenter', () => closeBtn.style.color = '#f8fafc');
+            closeBtn.addEventListener('mouseleave', () => closeBtn.style.color = '#94a3b8');
+            closeBtn.addEventListener('click', () => widget.remove());
+
+            // Auto Attach button hover & click
+            const attachBtn = widget.querySelector('#ep-widget-attach');
+            const filenameText = widget.querySelector('#ep-widget-filename');
+
+            attachBtn.addEventListener('mouseenter', () => {
+                attachBtn.style.background = 'rgba(255, 255, 255, 0.05)';
+            });
+            attachBtn.addEventListener('mouseleave', () => {
+                attachBtn.style.background = 'transparent';
+            });
+
+            let isAttached = false;
+            attachBtn.addEventListener('click', () => {
+                if (!cachedFile || isAttached) return;
+
+                const dt = new DataTransfer();
+                dt.items.add(cachedFile);
+
+                // ChatGPT has multiple hidden inputs (e.g., Profile Picture uploader vs Chat attachments).
+                // Grabbing the first one can hang the chat if it targets the settings Avatar uploader!
+                // Safest approach: Find prompt area first, fallback to the LAST file input on the page.
+                let fileInput = null;
+                const promptArea = document.querySelector('textarea#prompt-textarea') || document.querySelector('textarea');
+
+                if (promptArea) {
+                    const form = promptArea.closest('form');
+                    if (form) fileInput = form.querySelector('input[type="file"]');
+                }
+
+                if (!fileInput) {
+                    const allInputs = Array.from(document.querySelectorAll('input[type="file"]'));
+                    // Discard obvious image-only inputs
+                    const documentInputs = allInputs.filter(inp => !inp.accept || !inp.accept.includes('image/'));
+                    fileInput = documentInputs.pop() || allInputs.pop();
+                }
+
+                if (fileInput) {
+                    isAttached = true;
+                    fileInput.files = dt.files;
+                    const changeEvent = new Event('change', { bubbles: true });
+                    changeEvent._edgeCheckDone = true;
+                    fileInput.dispatchEvent(changeEvent);
+
+                    filenameText.innerText = 'Uploaded ✓';
+                    filenameText.style.color = '#34d399';
+
+                    setTimeout(() => {
+                        widget.style.opacity = '0';
+                        setTimeout(() => {
+                            widget.remove();
+                            if (isOpen) togglePanel();
+                        }, 300);
+                    }, 1000);
+                } else {
+                    filenameText.innerText = 'Input Not Found';
+                    filenameText.style.color = '#f87171';
+                }
+            });
+
+            // Hover effects for the whole widget
+            widget.addEventListener('mouseenter', () => widget.style.transform = 'scale(1.02)');
+            widget.addEventListener('mouseleave', () => widget.style.transform = 'scale(1)');
+
+            // Pre-fetch the file for instant attach
+            let cachedFile = null;
+            fetch(fileData.dataUrl)
+                .then(res => res.blob())
+                .then(blob => {
+                    cachedFile = new File([blob], fileData.filename, { type: 'application/pdf' });
+                });
         }
     });
 }

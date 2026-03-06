@@ -66,13 +66,10 @@ class TextRedactor(BaseRedactor):
                     text_instances = page.search_for(entity.value)
 
                     for inst in text_instances:
-                        # Add redaction annotation
+                        # Add redaction annotation as a solid black box for rendering consistency
                         annot = page.add_redact_annot(
                             inst,
-                            text=entity.masked_value or "[REDACTED]",
-                            fontsize=8,
                             fill=(0, 0, 0),       # Black fill
-                            text_color=(1, 1, 1),  # White text on black box
                         )
                         redaction_count += 1
 

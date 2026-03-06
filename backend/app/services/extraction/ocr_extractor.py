@@ -64,6 +64,9 @@ class OcrExtractor(BaseExtractor):
             
             # Extract text per page block, flattening words into lists
             word_locations = []
+            
+            # Keep a persistent running total of characters
+            total_char_offset = 0
 
             for page_num, img in enumerate(images):
                 scale_x = pdf_scales[page_num]["scale_x"]
@@ -97,9 +100,7 @@ class OcrExtractor(BaseExtractor):
                         
                         # Store global word locations for NER _resolve_bounding_box mapping
                         # We calculate start_char and end_char sequentially
-                        current_char_idx = len(" ".join(text_parts)) + (1 if text_parts else 0)
-                        if page_num > 0 and not text_parts:
-                            current_char_idx = len("\n\n".join(full_text_parts)) + 2
+                        current_char_idx = total_char_offset + len(" ".join(text_parts)) + (1 if text_parts else 0)
 
                         word_locations.append({
                             "word": word,
@@ -120,6 +121,9 @@ class OcrExtractor(BaseExtractor):
                     "height": img.height,
                 })
                 full_text_parts.append(page_text)
+                
+                # Advance total char offset for the next page block (+2 for \n\n)
+                total_char_offset += len(page_text) + 2
 
             logger.info(
                 "ocr_extracted",

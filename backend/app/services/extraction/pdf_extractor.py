@@ -51,6 +51,8 @@ class PdfExtractor(BaseExtractor):
             pages = []
             full_text_parts = []
             has_text = False
+            word_locations = []
+            current_char_offset = 0
 
             for page_num in range(len(doc)):
                 page = doc[page_num]
@@ -58,6 +60,18 @@ class PdfExtractor(BaseExtractor):
 
                 if text.strip():
                     has_text = True
+                
+                page_start = current_char_offset
+                page_end = current_char_offset + len(text)
+                word_locations.append({
+                    "word": "PAGE_CHUNK",
+                    "start_char": page_start,
+                    "end_char": page_end,
+                    "x0": 0.0, "y0": 0.0,
+                    "x1": page.rect.width, "y1": page.rect.height,
+                    "page": page_num
+                })
+                current_char_offset = page_end + 2 # +2 for "\n\n" separator
 
                 # Extract words with bounding boxes: (x0, y0, x1, y1, "word", block, line, word_idx)
                 words = page.get_text("words")
@@ -100,6 +114,7 @@ class PdfExtractor(BaseExtractor):
                 page_count=page_count,
                 has_embedded_text=has_text,
                 metadata=metadata,
+                word_locations=word_locations,
             )
 
         except ImportError:

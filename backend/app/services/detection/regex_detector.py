@@ -41,16 +41,16 @@ PATTERNS = {
         r"\b\d{4}\s\d{4}\s\d{4}\b|\b[A-Z]{5}\d{4}[A-Z]\b"
     ),
     EntityType.EMAIL: re.compile(
-        # Group 1 captures the email, ignoring optional Email: label
-        r"(?i)(?:(?:Email|E-mail|E\s*m\s*a\s*i\s*l)\s*[:]\s*)?((?:[A-Z0-9._%+-]\s*)+@\s*(?:[A-Z0-9.-]\s*)+\.\s*(?:[A-Z]\s*){2,})"
+        # Group 1 captures the email, strictly without spaces inside the address
+        r"(?i)(?:(?:Email|E-mail)\s*[:]\s*)?([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})"
     ),
     EntityType.PHONE: re.compile(
         # Matches +91 8008973757, (800) 897-3757, 800-897-3757, etc.
         r"(?ix)(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}(?:[-.\s]?\d{2,4})?\b"
     ),
     EntityType.LINKEDIN: re.compile(
-        # Matches linkedin.com/in/... OR plain 'Linkedin' if it's likely a profile link
-        r"(?i)\b(?:www\.)?linkedin\.com/in/[a-z0-9_-]+\b|\bLinkedin\b"
+        # Restricted to actual linkedin profile URLs, not just the word "LinkedIn"
+        r"(?i)\b(?:https?://)?(?:www\.)?linkedin\.com/(?:in|company|profile)/[a-zA-Z0-9_-]+\b"
     ),
 
     EntityType.URL: re.compile(
@@ -77,7 +77,7 @@ PATTERNS = {
         r"\b\d{8,17}\b"
     ),
     EntityType.ACCOUNT_NAME: re.compile(
-        r"(?i)\b(?:Account\s*Name|A/c\s*Name|Beneficiary\s*Name|Customer\s*Name|Name)[\s:]+([A-Za-z.\s]{3,50})"
+        r"(?i)\b(?:Account\s*Name|A/c\s*Name|Beneficiary\s*Name|Customer\s*Name)[\s:]+([A-Za-z .]{3,40})\b"
     ),
     EntityType.IFS_CODE: re.compile(
         r"(?i)\b(?:IFS\s*Code|IFSC)[\s:]*([A-Z]{4}0[A-Z0-9]{6})\b|\b([A-Z]{4}0[A-Z0-9]{6})\b"
@@ -85,19 +85,20 @@ PATTERNS = {
     EntityType.ADDRESS: re.compile(
         r"(?i)(?:\b(?:hno|h\.no|plot\s*no|flat\s*no)[\s:.-]*\d+(?:[\w\s.,/-]{1,150})(?:hyderabad|telangana|mumbai|delhi|bangalore|pune|chennai|kolkata|jaipur|rajasthan|gujarat|kerala|tirupati)(?:[\s,.-]*\d{6})?\b|"
         r"\b\d{1,5}(?:\s+\w+){1,4}\s+(?:nagar|colony|block|street|road|st|rd|ave|avenue|tank|phatak)[\w\s.,-]{1,100}(?:hyderabad|telangana|mumbai|delhi|bangalore|pune|chennai|kolkata|jaipur|rajasthan|tirupati)(?:[\s,.-]*\d{6})?\b|"
-        r"(?is:\bAddress\s*:\s*(?:[A-Za-z0-9.,/:\\-]\s*){5,250}(?:\d{6}\b|RAJ\b|TIRUPATI\b|HYDERABAD\b|TAMIL NADU\b))|"
-        r"(?:[A-Za-z0-9\s.,&\-()]{10,250}?)(?:hyderabad|telangana|mumbai|delhi|bangalore|pune|chennai|kolkata|jaipur|rajasthan|tirupati|kandlakoya|punjagutta)(?:[\s,.-]*\d{6})?\b|"
+        r"(?s:\b(?:Address|Location)[ \t:\-]*\n?[ \t]*([A-Za-z0-9.,/:\\\- \n]{5,250}?)(?:(?:\d{6}\b)|RAJ\b|TIRUPATI\b|HYDERABAD\b|TAMIL NADU\b|TELANGANA\b|MAHARASHTRA\b))|"
+        r"(?:\b[A-Za-z0-9 .,&\-()\n]{10,150}?)(?:hyderabad|telangana|mumbai|delhi|bangalore|pune|chennai|kolkata|jaipur|rajasthan|tirupati|kandlakoya|punjagutta)(?:[\s,.-]*\d{6})?\b|"
+        r"\b(?:hyderabad|mumbai|delhi|bangalore|pune|chennai|kolkata|jaipur)[,\s]+(?:telangana|maharashtra|karnataka|tamil nadu|west bengal|rajasthan)\b|"
         r"\b(?:hyderabad|telangana|mumbai|delhi|bangalore|pune|chennai|kolkata|jaipur|rajasthan)\b|"
         r"\b\d{1,5}\s+[a-zA-Z0-9.\s]+(?:St|Street|Ave|Avenue|Rd|Road|Blvd|Boulevard|Ln|Lane|Dr|Drive|Ct|Court|Way|Cir|Circle)[,\s]+[a-zA-Z\s]+[,\s]+[A-Z]{2}\s+\d{5}(?:-\d{4})?\b)"
     ),
 
     EntityType.PERSON_NAME: re.compile(
+        r"(?i:\b(?:Full[ \t]+Name|Name|Contact[ \t]+Name)[ \t:\-]*\n?[ \t]*)([A-Z][a-z]+(?:[ \t]+[A-Z][a-z]+){0,3})\b|"
         rf"(?i:\b(?:Mr|Mrs|Ms|Dr|Shri|Smt|Prof)\.?\s+{NAME_PART}(?:\s+{NAME_PART})*\b(?![-\']))|"
         rf"\b{NAME_PART}\s+[{U_UC}]\.?(?![-\'\w])|"
         rf"\b(?:[{U_UC}]\.?\s+)+{NAME_PART}\b(?![-\'])|"
         rf"\b{NAME_PART}\s+{NAME_PART}(?:\s+{NAME_PART})*\b(?![-\'])|"
-        rf"\b(?!(?:.*?\b(?:{EXCLUDE_HEADERS})\b))(?:[{U_UC}]{{3,}}\s+){{1,3}}[{U_UC}]{{3,}}\b|"
-        rf"\b(?:[{U_LC}]{{3,}}\s+){{2,3}}[{U_LC}]{{3,}}\b"
+        rf"\b(?!(?:.*?\b(?:{EXCLUDE_HEADERS})\b))(?:[{U_UC}]{{3,}}\s+){{1,3}}[{U_UC}]{{3,}}\b"
     ),
 }
 

@@ -21,11 +21,12 @@ env/
 *.sqlite3
 
 # ── Storage (runtime artifacts) ──
-storage/uploads/*
-storage/processed/*
-storage/signed/*
-storage/keys/*
-!storage/**/.gitkeep
+backend/storage/uploads/*
+backend/storage/processed/*
+backend/storage/signed/*
+backend/storage/keys/*
+!backend/storage/**/.gitkeep
+!backend/storage/README.md
 !storage/README.md
 
 # ── IDE ──
